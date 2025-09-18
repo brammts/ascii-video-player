@@ -1847,7 +1847,7 @@
                 this.jsonbinConfig = {
                     masterKey: '$2a$10$xnTX0i/kIoOj1EA3zNv3wuVEvkUf5yzv0uLNg/Lo4g85DSUaY6N9G',
                     accessKey: '$2a$10$hdyx9/lfRlkXgBRvZmfdyuY5bBbsCEDlIzvRuESAH9N90p3a7qLOa',
-                    binId: null, // Будет создан при первом запросе
+                    binId: localStorage.getItem('ascii_generator_jsonbin_id'), // Загружаем из localStorage
                     baseUrl: 'https://api.jsonbin.io/v3',
                     fallbackToLocal: true
                 };
@@ -1879,13 +1879,28 @@
                     console.log('🔄 Инициализация JSONBin...');
                     await this.initializeJsonBin();
                     
-                    if (this.isNewVisitor) {
-                        console.log('👤 Новый посетитель, увеличиваем счетчик...');
-                        await this.incrementVisitorCount();
-                    }
+                    // Проверяем, действительно ли это новый посетитель в JSONBin
+                    const data = await this.getJsonBinData();
+                    const existingVisitor = data.visitors.find(v => v.id === visitorId);
+                    const isActuallyNewVisitor = !existingVisitor;
+                    
+                    console.log('📊 Проверка посетителя:', {
+                        visitorId,
+                        isNewVisitor: this.isNewVisitor,
+                        isActuallyNewVisitor,
+                        existingVisitor: !!existingVisitor
+                    });
                     
                     console.log('📊 Обновляем статистику посетителя...');
                     await this.updateVisitorStats(visitorId, sessionId);
+                    
+                    if (isActuallyNewVisitor) {
+                        console.log('👤 Новый посетитель в JSONBin, увеличиваем общий счетчик...');
+                        await this.incrementVisitorCount();
+                    } else {
+                        console.log('👤 Существующий посетитель, счетчик не увеличиваем');
+                    }
+                    
                     console.log('✅ JSONBin успешно инициализирован и обновлен');
                 } catch (error) {
                     console.warn('⚠️ JSONBin недоступен, используем локальное хранилище:', error.message);
@@ -1912,11 +1927,20 @@
             // Инициализация JSONBin
             async initializeJsonBin() {
                 if (this.jsonbinConfig.binId) {
-                    return; // Уже инициализирован
+                    // Проверяем, что bin существует и доступен
+                    try {
+                        await this.getJsonBinData();
+                        console.log('✅ JSONBin уже инициализирован, ID:', this.jsonbinConfig.binId);
+                        return;
+                    } catch (error) {
+                        console.warn('⚠️ Существующий JSONBin недоступен, создаем новый...');
+                        this.jsonbinConfig.binId = null;
+                    }
                 }
                 
                 try {
                     // Создаем новый bin для счетчика посетителей
+                    console.log('🔄 Создаем новый JSONBin...');
                     const response = await fetch(`${this.jsonbinConfig.baseUrl}/b`, {
                         method: 'POST',
                         headers: {
@@ -1934,12 +1958,15 @@
                     if (response.ok) {
                         const data = await response.json();
                         this.jsonbinConfig.binId = data.metadata.id;
-                        console.log('JSONBin инициализирован, ID:', this.jsonbinConfig.binId);
+                        // Сохраняем ID в localStorage для повторного использования
+                        localStorage.setItem('ascii_generator_jsonbin_id', this.jsonbinConfig.binId);
+                        console.log('✅ JSONBin создан, ID:', this.jsonbinConfig.binId);
                     } else {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        const errorText = await response.text();
+                        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
                     }
                 } catch (error) {
-                    console.error('Ошибка инициализации JSONBin:', error);
+                    console.error('❌ Ошибка инициализации JSONBin:', error);
                     throw error;
                 }
             }
@@ -1990,12 +2017,16 @@
             async incrementVisitorCount() {
                 try {
                     const data = await this.getJsonBinData();
-                    data.visitorCount++;
+                    const oldCount = data.visitorCount || 0;
+                    data.visitorCount = oldCount + 1;
                     data.lastUpdated = new Date().toISOString();
+                    
+                    console.log('📈 Увеличиваем счетчик с', oldCount, 'до', data.visitorCount);
+                    
                     await this.updateJsonBinData(data);
-                    console.log('Счетчик посетителей увеличен:', data.visitorCount);
+                    console.log('✅ Счетчик посетителей успешно увеличен:', data.visitorCount);
                 } catch (error) {
-                    console.error('Ошибка увеличения счетчика:', error);
+                    console.error('❌ Ошибка увеличения счетчика:', error);
                     throw error;
                 }
             }
@@ -2046,17 +2077,23 @@
                 try {
                     // Пытаемся загрузить счетчик из JSONBin
                     const data = await this.getJsonBinData();
-                    const remoteCount = data.visitorCount;
+                    const remoteCount = data.visitorCount || 0;
+                    
+                    console.log('📊 Данные из JSONBin:', {
+                        visitorCount: remoteCount,
+                        visitors: data.visitors?.length || 0,
+                        lastUpdated: data.lastUpdated
+                    });
                     
                     this.visitorCountElement.textContent = remoteCount.toLocaleString();
                     this.setOnlineStatus(true);
-                    console.log('Счетчик загружен из JSONBin:', remoteCount);
+                    console.log('✅ Счетчик загружен из JSONBin:', remoteCount);
                     
                     // Запускаем периодическое обновление
                     this.startPeriodicUpdate();
                     return;
                 } catch (error) {
-                    console.warn('Ошибка при загрузке счетчика из JSONBin:', error);
+                    console.warn('❌ Ошибка при загрузке счетчика из JSONBin:', error);
                 }
                 
                 // Fallback на локальный счетчик
@@ -2064,7 +2101,7 @@
                     const localCount = parseInt(localStorage.getItem(this.counterKey)) || 0;
                     this.visitorCountElement.textContent = localCount.toLocaleString();
                     this.setOnlineStatus(false);
-                    console.log('Используется локальный счетчик:', localCount);
+                    console.log('🔄 Используется локальный счетчик:', localCount);
                 }
             }
 
@@ -2161,6 +2198,21 @@
             trackUserAction(action, details = {}) {
                 if (typeof ym !== 'undefined') {
                     ym(104205244, 'reachGoal', action, details);
+                }
+            }
+
+            // Метод для сброса счетчика (для отладки)
+            async resetCounter() {
+                try {
+                    const data = await this.getJsonBinData();
+                    data.visitorCount = 0;
+                    data.visitors = [];
+                    data.lastUpdated = new Date().toISOString();
+                    await this.updateJsonBinData(data);
+                    console.log('🔄 Счетчик сброшен');
+                    await this.loadAndDisplayCounter();
+                } catch (error) {
+                    console.error('❌ Ошибка сброса счетчика:', error);
                 }
             }
         }
