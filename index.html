@@ -1233,9 +1233,9 @@
 
     <!-- Visitor Counter -->
     <div class="visitor-counter" id="visitorCounter">
-        <h3><span class="status-indicator"></span> Посетители</h3>
+        <h3><span class="status-indicator"></span> Посещения</h3>
         <div class="visitor-count" id="visitorCount">0</div>
-        <div class="visitor-label">уникальных визитов</div>
+        <div class="visitor-label">всего визитов</div>
     </div>
 
     <!-- ASCII Kitten with Speech Bubble -->
@@ -1836,10 +1836,8 @@
         // Счетчик посещений с интеграцией JSONBin и Яндекс.Метрики
         class VisitorCounter {
             constructor() {
-                this.storageKey = 'ascii_generator_visitor_id';
                 this.counterKey = 'ascii_generator_visitor_count';
                 this.visitorCountElement = document.getElementById('visitorCount');
-                this.isNewVisitor = false;
                 
                 // JSONBin конфигурация
                 this.jsonbinConfig = {
@@ -1854,32 +1852,18 @@
             }
 
             async init() {
-                // Проверяем, есть ли уже ID посетителя
-                let visitorId = localStorage.getItem(this.storageKey);
-                
-                // Если нет ID посетителя - это новый посетитель
-                if (!visitorId) {
-                    visitorId = this.generateVisitorId();
-                    localStorage.setItem(this.storageKey, visitorId);
-                    this.isNewVisitor = true;
-                }
-                
-                // Инициализируем JSONBin и обновляем счетчик
+                // Инициализируем JSONBin и увеличиваем счетчик при каждом заходе
                 try {
                     console.log('🔄 Инициализация JSONBin...');
                     await this.initializeJsonBin();
                     
-                    if (this.isNewVisitor) {
-                        console.log('👤 Новый посетитель, увеличиваем счетчик...');
-                        await this.incrementVisitorCount();
-                    }
+                    console.log('📈 Увеличиваем счетчик посещений...');
+                    await this.incrementVisitorCount();
                     
                     console.log('✅ JSONBin успешно инициализирован');
                 } catch (error) {
                     console.warn('⚠️ JSONBin недоступен, используем локальное хранилище:', error.message);
-                    if (this.isNewVisitor) {
-                        this.incrementLocalCounter();
-                    }
+                    this.incrementLocalCounter();
                 }
                 
                 // Отправляем события в Яндекс.Метрику
@@ -1889,9 +1873,6 @@
                 await this.loadAndDisplayCounter();
             }
 
-            generateVisitorId() {
-                return 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            }
 
 
             // Инициализация JSONBin
@@ -2099,16 +2080,8 @@
                     // Отправляем событие о посещении страницы
                     ym(104205244, 'hit', window.location.href, {
                         title: document.title,
-                        referer: document.referrer || '',
-                        userParams: {
-                            visitor_type: this.isNewVisitor ? 'new' : 'returning'
-                        }
+                        referer: document.referrer || ''
                     });
-
-                    // Если это новый посетитель, отправляем специальное событие
-                    if (this.isNewVisitor) {
-                        ym(104205244, 'reachGoal', 'new_visitor');
-                    }
 
                     // Отправляем событие о загрузке ASCII генератора
                     ym(104205244, 'reachGoal', 'ascii_generator_loaded');
