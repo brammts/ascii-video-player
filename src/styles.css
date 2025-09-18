@@ -72,6 +72,85 @@ body {
     pointer-events: none;
 }
 
+/* Video Loading Progress */
+.video-loading-progress {
+    border: 3px solid #2196F3;
+    border-radius: 15px;
+    padding: 40px 20px;
+    text-align: center;
+    background: rgba(33, 150, 243, 0.05);
+    margin-top: 20px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { border-color: #2196F3; }
+    50% { border-color: #4CAF50; }
+    100% { border-color: #2196F3; }
+}
+
+.loading-content {
+    pointer-events: none;
+}
+
+.loading-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.loading-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #2196F3;
+}
+
+.loading-content p {
+    color: #cccccc;
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+
+.loading-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.loading-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2196F3, #4CAF50);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.loading-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #cccccc;
+}
+
+.loading-details span:first-child {
+    font-weight: 600;
+    color: #2196F3;
+}
+
+.loading-details span:last-child {
+    font-family: 'JetBrains Mono', monospace;
+    color: #4CAF50;
+}
+
 .upload-icon {
     font-size: 4rem;
     margin-bottom: 20px;
@@ -149,6 +228,28 @@ body {
 .new-video-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(156, 39, 176, 0.3);
+}
+
+/* Стили для секции выбора нового видео */
+.new-video-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.new-video-section .new-video-btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+    border-radius: 25px;
+    background: linear-gradient(45deg, #4CAF50, #66BB6A);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.new-video-section .new-video-btn:hover {
+    background: linear-gradient(45deg, #45a049, #5cb85c);
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
 }
 
 .settings-grid {
@@ -288,15 +389,6 @@ body {
     box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
 }
 
-.preprocess-btn {
-    background: linear-gradient(45deg, #9C27B0, #BA68C8);
-    color: white;
-}
-
-.preprocess-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(156, 39, 176, 0.3);
-}
 
 .record-btn {
     background: linear-gradient(45deg, #ff6b6b, #ee5a52);
@@ -349,6 +441,24 @@ body {
     cursor: not-allowed;
     transform: none !important;
     box-shadow: none !important;
+}
+
+/* Clear Cache Button */
+.clear-cache-btn {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    border: 2px solid #ff5252;
+}
+
+.clear-cache-btn:hover {
+    background: linear-gradient(135deg, #ff5252, #e53935);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.clear-cache-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(255, 107, 107, 0.2);
 }
 
 .btn-icon {
@@ -753,6 +863,18 @@ body {
         font-size: 3rem;
     }
     
+    .video-loading-progress {
+        padding: 30px 15px;
+    }
+    
+    .loading-icon {
+        font-size: 2.5rem;
+    }
+    
+    .loading-content h3 {
+        font-size: 1.3rem;
+    }
+    
     .ascii-content {
         font-size: 5px;
         max-height: 250px;
@@ -871,5 +993,138 @@ body {
     
     .setting-hint {
         font-size: 0.7rem;
+    }
+}
+
+/* Preprocessing Progress Section */
+.preprocessing-progress {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.preprocessing-content {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.preprocessing-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.preprocessing-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #4CAF50;
+}
+
+.preprocessing-content p {
+    color: #cccccc;
+    margin-bottom: 20px;
+}
+
+.preprocessing-progress-bar {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    height: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.preprocessing-progress-fill {
+    background: linear-gradient(90deg, #4CAF50, #2196F3);
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+}
+
+.preprocessing-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: #aaaaaa;
+}
+
+.cancel-btn {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+    background: linear-gradient(135deg, #d32f2f, #b71c1c);
+    transform: translateY(-2px);
+}
+
+.cancel-btn:active {
+    transform: translateY(0);
+}
+
+/* Preprocess Button */
+.preprocess-btn {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+}
+
+.preprocess-btn:hover {
+    background: linear-gradient(135deg, #45a049, #3d8b40);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.preprocess-btn:active {
+    transform: translateY(0);
+}
+
+.preprocess-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Mobile responsive for preprocessing */
+@media (max-width: 768px) {
+    .preprocessing-progress {
+        padding: 20px;
+    }
+    
+    .preprocessing-icon {
+        font-size: 2rem;
+    }
+    
+    .preprocessing-content h3 {
+        font-size: 1.2rem;
     }
 }

@@ -17,6 +17,8 @@ class ASCIIRenderer {
         this.duration = 0; // Длительность видео
         this.settings = null; // Настройки обработки
         this.videoRecorder = null; // Ссылка на рекордер для записи
+        this.lastReadyStateWarning = 0; // Для throttling сообщений о readyState
+        this.readyStateWarningInterval = 2000; // Интервал между предупреждениями (2 секунды)
     }
 
     /**
@@ -53,6 +55,17 @@ class ASCIIRenderer {
             throw new Error('Рендерер не инициализирован');
         }
 
+        // Дополнительная проверка готовности видео
+        if (!this.videoProcessor.video || this.videoProcessor.video.readyState < 4) {
+            const readyStateText = this.videoProcessor.video ? 
+                this.getReadyStateText(this.videoProcessor.video.readyState) : 
+                'видео не загружено';
+            console.log(`ASCII Renderer: Видео не готово (${readyStateText})`);
+            throw new Error(`Видео не готово для воспроизведения (${readyStateText})`);
+        }
+        
+        console.log(`ASCII Renderer: Видео готово. readyState: ${this.videoProcessor.video.readyState} (${this.getReadyStateText(this.videoProcessor.video.readyState)})`);
+
         this.settings = settings;
         this.isRealtime = true;
         this.fps = settings.fps || 30;
@@ -72,6 +85,43 @@ class ASCIIRenderer {
         
         // Запускаем рендеринг в реальном времени
         this.renderRealtime();
+    }
+
+    /**
+     * Запускает воспроизведение предобработанных кадров
+     * @param {Array} frames - Массив ASCII кадров
+     * @param {Object} settings - Настройки воспроизведения
+     */
+    startPreprocessedPlayback(frames, settings) {
+        if (!this.container) {
+            throw new Error('Рендерер не инициализирован');
+        }
+
+        if (!frames || frames.length === 0) {
+            throw new Error('Нет кадров для воспроизведения');
+        }
+
+        console.log(`ASCII Renderer: Начинаем воспроизведение ${frames.length} предобработанных кадров`);
+
+        this.settings = settings;
+        this.isRealtime = false;
+        this.frames = frames;
+        this.fps = settings.fps || 30;
+        this.frameDelay = 1000 / this.fps;
+        this.duration = frames.length / this.fps;
+        this.currentTime = 0;
+        this.currentFrame = 0;
+
+        this.isPlaying = true;
+        this.startTime = performance.now();
+        
+        // Запускаем звук
+        if (this.videoProcessor) {
+            this.videoProcessor.playAudio();
+        }
+        
+        // Запускаем рендеринг предобработанных кадров
+        this.render();
     }
 
     /**
@@ -116,6 +166,28 @@ class ASCIIRenderer {
         // Очищаем контент
         if (this.container) {
             this.container.textContent = '';
+        }
+    }
+
+    /**
+     * Возвращает текстовое описание состояния готовности видео
+     * @param {number} readyState - Состояние готовности видео
+     * @returns {string} - Текстовое описание
+     */
+    getReadyStateText(readyState) {
+        switch (readyState) {
+            case 0:
+                return 'HAVE_NOTHING (0) - нет данных';
+            case 1:
+                return 'HAVE_METADATA (1) - загружаются метаданные';
+            case 2:
+                return 'HAVE_CURRENT_DATA (2) - загружаются данные текущего кадра';
+            case 3:
+                return 'HAVE_FUTURE_DATA (3) - готово к воспроизведению';
+            case 4:
+                return 'HAVE_ENOUGH_DATA (4) - достаточно данных для воспроизведения';
+            default:
+                return `неизвестное состояние (${readyState})`;
         }
     }
 
@@ -244,23 +316,77 @@ class ASCIIRenderer {
                 this.settings
             );
 
-            // Извлекаем и обрабатываем кадр в реальном времени
-            const imageData = await this.videoProcessor.extractFrame(
-                this.currentTime, 
-                adaptedSettings.asciiWidth, 
-                adaptedSettings.asciiHeight
-            );
-            
-            const asciiFrame = this.videoProcessor.convertToASCII(imageData, adaptedSettings);
-            
-            // Отображаем кадр только если он изменился
-            if (this.container.textContent !== asciiFrame) {
-                this.container.textContent = asciiFrame;
+            // Проверяем готовность видео перед извлечением кадра
+            if (!this.videoProcessor.video) {
+                this.stop();
+                return;
             }
             
-            // Записываем кадр если включена запись
-            if (this.videoRecorder && this.videoRecorder.isRecording) {
-                this.videoRecorder.addFrame(asciiFrame, adaptedSettings.asciiWidth, adaptedSettings.asciiHeight, this.currentTime);
+            // Если видео не готово для воспроизведения, ждем
+            // if (this.videoProcessor.video.readyState < 4) {
+            //     const now = Date.now();
+            //     // Показываем предупреждение не чаще чем раз в 2 секунды
+            //     if (now - this.lastReadyStateWarning > this.readyStateWarningInterval) {
+            //         const readyStateText = this.getReadyStateText(this.videoProcessor.video.readyState);
+            //         const bufferInfo = this.videoProcessor.getBufferInfo();
+            //         console.log(`Видео не готово для воспроизведения (${readyStateText}), буфер: ${bufferInfo.percentage.toFixed(1)}%, ждем...`);
+            //         this.lastReadyStateWarning = now;
+            //     }
+                
+            //     // Пытаемся загрузить больше данных
+            //     if (this.videoProcessor.video.readyState >= 1) {
+            //         this.videoProcessor.video.load();
+            //     }
+                
+            //     // Увеличиваем задержку для следующего кадра
+            //     setTimeout(() => {
+            //         if (this.isPlaying && this.isRealtime) {
+            //             this.animationId = requestAnimationFrame(() => this.renderRealtime());
+            //         }
+            //     }, this.frameDelay * 3);
+            //     return;
+            // }
+            
+            // // Проверяем, нужно ли загрузить больше данных
+            // if (this.videoProcessor.needsMoreData(this.currentTime)) {
+            //     this.videoProcessor.video.load();
+            // }
+            
+            // // Сбрасываем счетчик предупреждений, если видео готово
+            // this.lastReadyStateWarning = 0;
+
+            try {
+                // Извлекаем и обрабатываем кадр в реальном времени
+                const imageData = await this.videoProcessor.extractFrame(
+                    this.currentTime, 
+                    adaptedSettings.asciiWidth, 
+                    adaptedSettings.asciiHeight
+                );
+                
+                const asciiFrame = this.videoProcessor.convertToASCII(imageData, adaptedSettings);
+                
+                // Сбрасываем счетчик предупреждений при успешном извлечении кадра
+                this.lastReadyStateWarning = 0;
+                
+                // Отображаем кадр только если он изменился
+                if (this.container.textContent !== asciiFrame) {
+                    this.container.textContent = asciiFrame;
+                }
+                
+                // Записываем кадр если включена запись
+                if (this.videoRecorder && this.videoRecorder.isRecording) {
+                    this.videoRecorder.addFrame(asciiFrame, adaptedSettings.asciiWidth, adaptedSettings.asciiHeight, this.currentTime);
+                }
+                
+            } catch (error) {
+                console.warn('Ошибка извлечения кадра в реальном времени:', error.message);
+                // Показываем пустой кадр при ошибке
+                if (this.container) {
+                    this.container.textContent = this.videoProcessor.createEmptyFrame(
+                        adaptedSettings.asciiWidth, 
+                        adaptedSettings.asciiHeight
+                    );
+                }
             }
             
             // Синхронизируем звук

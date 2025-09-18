@@ -42,7 +42,7 @@ class VideoRecorder {
         this.canvas = document.createElement('canvas');
         this.canvas.width = this.width;
         this.canvas.height = this.height;
-        this.ctx = this.canvas.getContext('2d');
+        this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
         
         // Настраиваем контекст для ASCII рендеринга
         this.ctx.fillStyle = '#000000';

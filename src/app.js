@@ -4,12 +4,32 @@
 class ASCIIVideoPlayerApp {
     constructor() {
         this.videoProcessor = new VideoProcessor();
+        
+        // Проверяем, что VideoPreprocessor загружен
+        if (typeof VideoPreprocessor === 'undefined') {
+            console.warn('VideoPreprocessor не загружен! Создаем заглушку...');
+            // Создаем заглушку для VideoPreprocessor
+            this.videoPreprocessor = {
+                isPreprocessing: false,
+                init: () => {},
+                startPreprocessing: () => Promise.reject(new Error('VideoPreprocessor не загружен')),
+                stopPreprocessing: () => {},
+                cleanup: () => {},
+                generateVideoId: () => 'temp',
+                loadFromStorage: () => null,
+                saveToStorage: () => false
+            };
+        } else {
+            this.videoPreprocessor = new VideoPreprocessor();
+        }
         this.asciiRenderer = new ASCIIRenderer();
         this.videoRecorder = new VideoRecorder();
         this.asciiFormatter = new ASCIIFormatter();
         this.currentVideo = null;
         this.isRecording = false;
         this.currentFrame = null;
+        this.isPreprocessed = false;
+        this.preprocessedFrames = [];
         
         // Определяем мобильное устройство
         this.isMobile = this.detectMobileDevice();
@@ -17,6 +37,7 @@ class ASCIIVideoPlayerApp {
         this.initializeElements();
         this.bindEvents();
         this.videoProcessor.init();
+        this.videoPreprocessor.init(this.videoProcessor);
         
         // Показываем предупреждение для мобильных устройств
         if (this.isMobile) {
@@ -77,6 +98,17 @@ class ASCIIVideoPlayerApp {
         this.asciiContent = document.getElementById('asciiContent');
         this.controls = document.getElementById('controls');
         
+        // Элементы прогресс-бара загрузки видео
+        this.videoLoadingProgress = document.getElementById('videoLoadingProgress');
+        this.loadingStatus = document.getElementById('loadingStatus');
+        this.loadingProgressFill = document.getElementById('loadingProgressFill');
+        this.loadingProgressText = document.getElementById('loadingProgressText');
+        this.loadingTimeInfo = document.getElementById('loadingTimeInfo');
+        
+        // Секция выбора нового видео
+        this.newVideoSection = document.getElementById('newVideoSection');
+        
+        
         // Кнопки управления
         this.playBtn = document.getElementById('playBtn');
         this.pauseBtn = document.getElementById('pauseBtn');
@@ -90,6 +122,16 @@ class ASCIIVideoPlayerApp {
         this.widthInput = document.getElementById('widthInput');
         this.heightInput = document.getElementById('heightInput');
         this.newVideoBtn = document.getElementById('newVideoBtn');
+        this.clearCacheBtn = document.getElementById('clearCacheBtn');
+        this.preprocessBtn = document.getElementById('preprocessBtn');
+        
+        // Элементы прогресса предобработки
+        this.preprocessingProgress = document.getElementById('preprocessingProgress');
+        this.preprocessingStatus = document.getElementById('preprocessingStatus');
+        this.preprocessingProgressFill = document.getElementById('preprocessingProgressFill');
+        this.preprocessingProgressText = document.getElementById('preprocessingProgressText');
+        this.preprocessingFrameInfo = document.getElementById('preprocessingFrameInfo');
+        this.cancelPreprocessingBtn = document.getElementById('cancelPreprocessingBtn');
         
         // Прогресс
         this.progressText = document.getElementById('progressText');
@@ -105,11 +147,25 @@ class ASCIIVideoPlayerApp {
      * Привязывает события
      */
     bindEvents() {
+        
         // Загрузка файла
-        this.videoInput.addEventListener('change', (e) => this.handleFileSelect(e));
-        this.uploadArea.addEventListener('click', () => this.videoInput.click());
-        this.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
-        this.uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
+        if (this.videoInput) {
+            this.videoInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        } else {
+            console.error('videoInput не найден!');
+        }
+        
+        if (this.uploadArea) {
+            this.uploadArea.addEventListener('click', () => {
+                if (this.videoInput) {
+                    this.videoInput.click();
+                }
+            });
+            this.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
+            this.uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
+        } else {
+            console.error('uploadArea не найден!');
+        }
         
         // Обработчик для кнопки "Выбрать файл"
         const uploadBtn = document.querySelector('.upload-btn');
@@ -133,6 +189,9 @@ class ASCIIVideoPlayerApp {
         this.widthInput.addEventListener('change', () => this.updateSettings());
         this.heightInput.addEventListener('change', () => this.updateSettings());
         this.newVideoBtn.addEventListener('click', () => this.selectNewVideo());
+        this.clearCacheBtn.addEventListener('click', () => this.clearCache());
+        this.preprocessBtn.addEventListener('click', () => this.startPreprocessing());
+        this.cancelPreprocessingBtn.addEventListener('click', () => this.cancelPreprocessing());
         
     }
 
@@ -182,32 +241,61 @@ class ASCIIVideoPlayerApp {
             // Очищаем предыдущее состояние без показа области загрузки
             this.clearVideoState();
 
-            // Загружаем видео
-            const videoInfo = await this.videoProcessor.loadVideo(file);
+            // Показываем прогресс-бар загрузки видео
+            this.showVideoLoadingProgress();
+            this.updateVideoLoadingProgress(5, 'Инициализация видео...');
+            
+            // Загружаем видео с отслеживанием прогресса
+            this.updateVideoLoadingProgress(15, 'Загрузка метаданных...');
+            const videoInfo = await this.videoProcessor.loadVideo(file, (progress, status) => {
+                // Обновляем прогресс загрузки видео
+                this.updateVideoLoadingProgress(15 + (progress * 0.4), status);
+            });
+            
+            this.updateVideoLoadingProgress(60, 'Подготовка к обработке...');
             this.currentVideo = file;
             
-            // Скрываем область загрузки
-            this.uploadArea.style.display = 'none';
+            // Показываем информацию о загруженном видео
+            const duration = Math.floor(videoInfo.duration);
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
             
-            // Отключаем кнопку "Выбрать файл" в HTML
-            const uploadBtn = document.querySelector('.upload-btn');
-            if (uploadBtn) {
-                uploadBtn.style.display = 'none';
+            this.updateVideoLoadingProgress(70, 'Проверка готовности видео...', `${sizeMB}MB`);
+            
+            // Ждем полной загрузки видео
+            await this.waitForVideoReady();
+            
+            // Финальное обновление прогресса
+            this.updateVideoLoadingProgress(100, 'Видео готово к воспроизведению!', `${sizeMB}MB`);
+            
+            // Небольшая задержка чтобы пользователь увидел 100%
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Скрываем прогресс-бар загрузки и показываем интерфейс
+            this.hideVideoLoadingProgress();
+            this.showVideoInterface();
+            
+            // Генерируем ID видео и проверяем предобработанные данные
+            const videoId = this.videoPreprocessor.generateVideoId(file);
+            this.videoPreprocessor.setCurrentVideoId(videoId);
+            
+            // Проверяем, есть ли предобработанные данные
+            const savedData = this.videoPreprocessor.loadFromStorage(videoId);
+            if (savedData && this.videoPreprocessor.isSettingsCompatible(savedData.settings, this.settings)) {
+                this.videoPreprocessor.preprocessedFrames = savedData.frames;
+                this.showStatus(`Видео загружено: ${file.name}. Найдены предобработанные данные (${savedData.frameCount} кадров)!`, 'success');
+            } else {
+                this.showStatus(`Видео загружено: ${file.name}. Готово к воспроизведению!`, 'success');
             }
             
-            // Показываем панель настроек
-            this.settingsPanel.style.display = 'block';
-            this.asciiDisplaySection.style.display = 'block';
-            this.controls.style.display = 'block';
+            // Обновляем элементы управления
+            this.updateControls(false);
             
-            // Обновляем настройки
-            this.updateSettings();
-            
-            this.showStatus(`Видео загружено: ${file.name}`, 'success');
+            this.updateProgress(100, 'Видео готово к воспроизведению');
             
         } catch (error) {
-            this.showStatus(`Ошибка загрузки: ${error.message}`, 'error');
             console.error('Ошибка загрузки видео:', error);
+            this.hideVideoLoadingProgress();
+            this.showStatus(`Ошибка загрузки: ${error.message}`, 'error');
         }
     }
 
@@ -220,7 +308,7 @@ class ASCIIVideoPlayerApp {
         // Оптимизируем FPS для мобильных устройств
         const fps = this.isMobile ? 15 : 30;
         
-        const settings = {
+        const newSettings = {
             quality: this.qualitySelect.value,
             width: parseInt(this.widthInput.value),
             height: parseInt(this.heightInput.value),
@@ -231,7 +319,24 @@ class ASCIIVideoPlayerApp {
             isMobile: this.isMobile // Передаем информацию о мобильном устройстве
         };
         
-        this.settings = settings;
+        // Проверяем, изменились ли настройки, влияющие на предобработку
+        if (this.settings && this.isPreprocessed) {
+            const settingsChanged = 
+                this.settings.quality !== newSettings.quality ||
+                this.settings.asciiWidth !== newSettings.asciiWidth ||
+                this.settings.asciiHeight !== newSettings.asciiHeight;
+            
+            if (settingsChanged) {
+                // Сбрасываем предобработанные данные при изменении настроек
+                this.isPreprocessed = false;
+                this.preprocessedFrames = [];
+                this.videoPreprocessor.cleanup();
+                this.updatePreprocessingControls();
+                this.showStatus('Настройки изменились. Требуется переобработка видео.', 'warning');
+            }
+        }
+        
+        this.settings = newSettings;
     }
 
     /**
@@ -252,6 +357,9 @@ class ASCIIVideoPlayerApp {
         // Очищаем VideoProcessor
         this.videoProcessor.cleanup();
         
+        // Очищаем VideoPreprocessor
+        this.videoPreprocessor.cleanup();
+        
         // Сбрасываем прогресс
         this.updateProgress(0, 'Загрузка...');
         
@@ -261,9 +369,13 @@ class ASCIIVideoPlayerApp {
         // Очищаем input для возможности повторного выбора того же файла
         this.videoInput.value = '';
         
-        // Убеждаемся, что область загрузки скрыта
-        if (this.uploadArea) {
-            this.uploadArea.style.display = 'none';
+        // Скрываем только основное содержимое области загрузки, но оставляем кнопку выбора нового видео
+        const uploadContent = this.uploadArea?.querySelector('.upload-content');
+        if (uploadContent) {
+            uploadContent.style.display = 'none';
+        }
+        if (this.videoLoadingProgress) {
+            this.videoLoadingProgress.style.display = 'none';
         }
     }
 
@@ -277,16 +389,51 @@ class ASCIIVideoPlayerApp {
         // Показываем область загрузки
         this.uploadArea.style.display = 'block';
         
-        // Показываем кнопку "Выбрать файл"
-        const uploadBtn = document.querySelector('.upload-btn');
-        if (uploadBtn) {
-            uploadBtn.style.display = 'block';
+        // Показываем основное содержимое области загрузки
+        const uploadContent = this.uploadArea.querySelector('.upload-content');
+        if (uploadContent) {
+            uploadContent.style.display = 'block';
         }
         
-        // Скрываем панели
+        // Скрываем кнопку выбора нового видео только при полном сбросе
+        if (this.newVideoSection) {
+            this.newVideoSection.style.display = 'none';
+        }
+        
+        // Скрываем панели и прогресс-бар загрузки
         this.settingsPanel.style.display = 'none';
         this.asciiDisplaySection.style.display = 'none';
         this.controls.style.display = 'none';
+        if (this.videoLoadingProgress) {
+            this.videoLoadingProgress.style.display = 'none';
+        }
+    }
+
+    /**
+     * Сбрасывает состояние видео без скрытия кнопки выбора нового видео
+     */
+    resetVideoStateKeepNewVideoButton() {
+        // Очищаем состояние
+        this.clearVideoState();
+        
+        // Показываем область загрузки
+        this.uploadArea.style.display = 'block';
+        
+        // Показываем основное содержимое области загрузки
+        const uploadContent = this.uploadArea.querySelector('.upload-content');
+        if (uploadContent) {
+            uploadContent.style.display = 'block';
+        }
+        
+        // НЕ скрываем кнопку выбора нового видео - она должна остаться видимой
+        
+        // Скрываем панели и прогресс-бар загрузки
+        this.settingsPanel.style.display = 'none';
+        this.asciiDisplaySection.style.display = 'none';
+        this.controls.style.display = 'none';
+        if (this.videoLoadingProgress) {
+            this.videoLoadingProgress.style.display = 'none';
+        }
     }
 
     /**
@@ -296,7 +443,93 @@ class ASCIIVideoPlayerApp {
         // Полный сброс состояния с показом области загрузки
         this.resetVideoState();
         
-        this.showStatus('Выберите новое видео', 'info');
+        this.showStatus('Выберите видео', 'info');
+    }
+
+    /**
+     * Ждет полной готовности видео перед началом обработки
+     */
+    async waitForVideoReady() {
+        const maxWaitTime = 30000; // Максимум 30 секунд ожидания
+        const checkInterval = 200; // Проверяем каждые 200ms
+        let waited = 0;
+        
+        while (waited < maxWaitTime) {
+            if (this.videoProcessor.video && this.videoProcessor.video.readyState >= 3) {
+                return;
+            }
+            
+            // Обновляем прогресс загрузки
+            const progress = Math.min(70 + (waited / maxWaitTime) * 20, 90);
+            this.updateVideoLoadingProgress(progress, `Загрузка видео... (${Math.floor(waited/1000)}с)`);
+            
+            // Обновляем состояние кнопок
+            this.updateControls(false);
+            
+            await new Promise(resolve => setTimeout(resolve, checkInterval));
+            waited += checkInterval;
+        }
+        
+        // Если видео все еще не готово, выбрасываем ошибку
+        throw new Error('Видео не готово к обработке после ожидания');
+    }
+
+    /**
+     * Очищает кэш localStorage
+     */
+    clearCache() {
+        try {
+            // Подсчитываем количество элементов кэша
+            let asciiDataCount = 0;
+            let totalSize = 0;
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('ascii_preprocessed_')) {
+                    asciiDataCount++;
+                    const value = localStorage.getItem(key);
+                    totalSize += new Blob([value]).size;
+                }
+            }
+            
+            if (asciiDataCount > 0) {
+                const sizeMB = (totalSize / 1024 / 1024).toFixed(2);
+                const confirmMessage = `Удалить ${asciiDataCount} сохраненных видео (${sizeMB}MB)?`;
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+            }
+            
+            // Очищаем все данные ASCII
+            let removedCount = 0;
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('ascii_preprocessed_')) {
+                    localStorage.removeItem(key);
+                    removedCount++;
+                }
+            }
+            
+            // Очищаем текущие данные
+            this.videoPreprocessor.cleanup();
+            
+            this.showStatus(`Кэш очищен! Удалено ${removedCount} сохраненных видео`, 'success');
+            
+        } catch (error) {
+            this.showStatus(`Ошибка очистки кэша: ${error.message}`, 'error');
+            console.error('Ошибка очистки кэша:', error);
+        }
+    }
+
+
+
+
+    /**
+     * Обновляет элементы управления предобработкой
+     */
+    updatePreprocessingControls() {
+        // Кнопка предобработки удалена, этот метод оставлен для совместимости
+        // но больше не выполняет никаких действий
     }
 
 
@@ -325,12 +558,20 @@ class ASCIIVideoPlayerApp {
             
             const settings = this.settings || this.getDefaultSettings();
             
-            // Запускаем обработку в реальном времени
-            this.asciiRenderer.startRealtimeProcessing(settings);
+            // Проверяем, есть ли предобработанные данные
+            if (this.hasPreprocessedData()) {
+                console.log('Воспроизводим предобработанные кадры');
+                const frames = this.videoPreprocessor.getPreprocessedFrames();
+                this.asciiRenderer.startPreprocessedPlayback(frames, settings);
+                this.showStatus('Воспроизведение предобработанного видео', 'success');
+            } else {
+                console.log('Воспроизводим в реальном времени');
+                this.asciiRenderer.startRealtimeProcessing(settings);
+                this.showStatus('Воспроизведение в реальном времени', 'success');
+            }
+            
             this.updateControls(true);
             this.startProgressUpdate();
-            
-            this.showStatus('Воспроизведение начато', 'success');
             
         } catch (error) {
             this.showStatus(`Ошибка воспроизведения: ${error.message}`, 'error');
@@ -344,6 +585,11 @@ class ASCIIVideoPlayerApp {
     pause() {
         this.asciiRenderer.pause();
         this.updateControls(false);
+        
+        // Дополнительно обновляем состояние через небольшую задержку
+        setTimeout(() => {
+            this.updateControls(false);
+        }, 100);
     }
 
     /**
@@ -365,13 +611,20 @@ class ASCIIVideoPlayerApp {
      * Обновляет элементы управления
      */
     updateControls(isPlaying) {
-        this.playBtn.disabled = isPlaying;
+        // Проверяем готовность видео
+        const isVideoReady = this.videoPreprocessor.isVideoReady();
+        const hasVideo = this.currentVideo && this.videoProcessor && this.videoProcessor.video;
+        
+        // Для кнопки воспроизведения используем более мягкую проверку
+        const canPlay = hasVideo && (isVideoReady || (this.videoProcessor.video.readyState >= 2));
+        
+        this.playBtn.disabled = isPlaying || !canPlay;
         this.pauseBtn.disabled = !isPlaying;
         this.stopBtn.disabled = !isPlaying;
         
-        // Включаем кнопки записи и копирования только если видео загружено
-        this.recordBtn.disabled = !this.currentVideo || isPlaying;
-        this.copyFrameBtn.disabled = !this.currentVideo;
+        // Включаем кнопки записи и копирования только если видео загружено и готово
+        this.recordBtn.disabled = !hasVideo || !isVideoReady || isPlaying;
+        this.copyFrameBtn.disabled = !hasVideo || !isVideoReady;
         
         // Показываем/скрываем кнопки в зависимости от состояния
         if (isPlaying) {
@@ -380,6 +633,20 @@ class ASCIIVideoPlayerApp {
         } else {
             this.playBtn.style.display = 'inline-flex';
             this.pauseBtn.style.display = 'none';
+        }
+        
+        // Обновляем текст кнопки воспроизведения
+        if (this.currentVideo) {
+            // Если видео загружено, всегда показываем "Воспроизвести" или "Пауза"
+            if (isPlaying) {
+                this.playBtn.textContent = '▶ Воспроизвести';
+            } else {
+                this.playBtn.textContent = '▶ Воспроизвести';
+            }
+            this.playBtn.style.opacity = '1';
+        } else {
+            this.playBtn.textContent = '▶ Воспроизвести';
+            this.playBtn.style.opacity = '1';
         }
     }
 
@@ -414,12 +681,97 @@ class ASCIIVideoPlayerApp {
     }
 
     /**
+     * Показывает прогресс-бар загрузки видео
+     */
+    showVideoLoadingProgress() {
+        this.uploadArea.style.display = 'none';
+        this.videoLoadingProgress.style.display = 'block';
+        this.updateVideoLoadingProgress(0, 'Подготовка к загрузке...');
+    }
+
+    /**
+     * Скрывает прогресс-бар загрузки видео
+     */
+    hideVideoLoadingProgress() {
+        this.videoLoadingProgress.style.display = 'none';
+    }
+
+    /**
+     * Обновляет прогресс загрузки видео
+     */
+    updateVideoLoadingProgress(progress, status, timeInfo = '') {
+        if (this.loadingProgressFill) {
+            this.loadingProgressFill.style.width = `${progress}%`;
+        }
+        if (this.loadingStatus) {
+            this.loadingStatus.textContent = status;
+        }
+        if (this.loadingProgressText) {
+            this.loadingProgressText.textContent = `${Math.round(progress)}%`;
+        }
+        if (this.loadingTimeInfo) {
+            this.loadingTimeInfo.textContent = timeInfo;
+        }
+    }
+
+    /**
+     * Показывает интерфейс видео после загрузки
+     */
+    showVideoInterface() {
+        // Убеждаемся, что область загрузки видима
+        if (this.uploadArea) {
+            this.uploadArea.style.display = 'block';
+        }
+        
+        // Скрываем основное содержимое области загрузки
+        const uploadContent = this.uploadArea.querySelector('.upload-content');
+        if (uploadContent) {
+            uploadContent.style.display = 'none';
+        }
+        
+        // Показываем кнопку выбора нового видео
+        if (this.newVideoSection) {
+            this.newVideoSection.style.display = 'flex';
+        }
+        
+        // Показываем панель настроек
+        this.settingsPanel.style.display = 'block';
+        this.asciiDisplaySection.style.display = 'block';
+        this.controls.style.display = 'block';
+        
+        // Обновляем настройки
+        this.updateSettings();
+    }
+
+    /**
      * Форматирует время
      */
     formatTime(seconds) {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    /**
+     * Возвращает текстовое описание состояния готовности видео
+     * @param {number} readyState - Состояние готовности видео
+     * @returns {string} - Текстовое описание
+     */
+    getReadyStateText(readyState) {
+        switch (readyState) {
+            case 0:
+                return 'HAVE_NOTHING (0) - нет данных';
+            case 1:
+                return 'HAVE_METADATA (1) - загружены метаданные';
+            case 2:
+                return 'HAVE_CURRENT_DATA (2) - загружены данные текущего кадра';
+            case 3:
+                return 'HAVE_FUTURE_DATA (3) - готово к воспроизведению';
+            case 4:
+                return 'HAVE_ENOUGH_DATA (4) - достаточно данных';
+            default:
+                return `неизвестное состояние (${readyState})`;
+        }
     }
 
     /**
@@ -583,7 +935,7 @@ class ASCIIVideoPlayerApp {
             
             // Создаем canvas для рендеринга ASCII
             const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
             
             // Настройки шрифта и размеров
             const fontSize = 12;
@@ -646,9 +998,146 @@ class ASCIIVideoPlayerApp {
             console.error('Ошибка сохранения кадра:', error);
         }
     }
+
+    /**
+     * Начинает предобработку видео
+     */
+    async startPreprocessing() {
+        if (!this.currentVideo) {
+            this.showStatus('Сначала загрузите видео', 'warning');
+            return;
+        }
+
+        if (this.videoPreprocessor.isPreprocessing) {
+            this.showStatus('Предобработка уже выполняется', 'warning');
+            return;
+        }
+
+        try {
+            const settings = this.settings || this.getDefaultSettings();
+            
+            // Генерируем ID видео
+            const videoId = this.videoPreprocessor.generateVideoId(this.currentVideo);
+            this.videoPreprocessor.setCurrentVideoId(videoId);
+            
+            // Показываем прогресс предобработки
+            this.showPreprocessingProgress();
+            
+            // Запускаем предобработку
+            await this.videoPreprocessor.startPreprocessing(
+                settings,
+                (progress, status) => this.updatePreprocessingProgress(progress, status),
+                (frames) => this.onPreprocessingComplete(frames),
+                (error) => this.onPreprocessingError(error)
+            );
+            
+        } catch (error) {
+            this.hidePreprocessingProgress();
+            this.showStatus(`Ошибка предобработки: ${error.message}`, 'error');
+            console.error('Ошибка предобработки:', error);
+        }
+    }
+
+    /**
+     * Отменяет предобработку
+     */
+    cancelPreprocessing() {
+        if (this.videoPreprocessor.isPreprocessing) {
+            this.videoPreprocessor.stopPreprocessing();
+            this.hidePreprocessingProgress();
+            this.showStatus('Предобработка отменена', 'info');
+        }
+    }
+
+    /**
+     * Показывает прогресс предобработки
+     */
+    showPreprocessingProgress() {
+        this.preprocessingProgress.style.display = 'block';
+        this.asciiDisplaySection.style.display = 'none';
+        this.controls.style.display = 'none';
+        this.updatePreprocessingProgress(0, 'Подготовка к обработке...');
+    }
+
+    /**
+     * Скрывает прогресс предобработки
+     */
+    hidePreprocessingProgress() {
+        this.preprocessingProgress.style.display = 'none';
+    }
+
+    /**
+     * Обновляет прогресс предобработки
+     */
+    updatePreprocessingProgress(progress, status) {
+        if (this.preprocessingProgressFill) {
+            this.preprocessingProgressFill.style.width = `${progress}%`;
+        }
+        if (this.preprocessingStatus) {
+            this.preprocessingStatus.textContent = status;
+        }
+        if (this.preprocessingProgressText) {
+            this.preprocessingProgressText.textContent = `${Math.round(progress)}%`;
+        }
+        
+        // Обновляем информацию о кадрах
+        if (status.includes('кадров')) {
+            const match = status.match(/(\d+) из (\d+) кадров/);
+            if (match) {
+                this.preprocessingFrameInfo.textContent = `${match[1]} / ${match[2]} кадров`;
+            }
+        }
+    }
+
+    /**
+     * Обработчик завершения предобработки
+     */
+    onPreprocessingComplete(frames) {
+        this.hidePreprocessingProgress();
+        this.showVideoInterface();
+        this.updateControls(false);
+        this.showStatus(`Предобработка завершена! Обработано ${frames.length} кадров`, 'success');
+    }
+
+    /**
+     * Обработчик ошибки предобработки
+     */
+    onPreprocessingError(error) {
+        this.hidePreprocessingProgress();
+        this.showStatus(`Ошибка предобработки: ${error.message}`, 'error');
+        console.error('Ошибка предобработки:', error);
+    }
+
+    /**
+     * Проверяет, есть ли предобработанные данные
+     */
+    hasPreprocessedData() {
+        return this.videoPreprocessor.hasPreprocessedData();
+    }
 }
 
 // Инициализация приложения при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new ASCIIVideoPlayerApp();
+    
+    // Проверяем, что основные классы загружены
+    const requiredClasses = ['VideoProcessor', 'ASCIIRenderer', 'VideoRecorder', 'ASCIIFormatter'];
+    const missingClasses = requiredClasses.filter(className => typeof window[className] === 'undefined');
+    
+    if (missingClasses.length > 0) {
+        console.error('Не загружены основные классы:', missingClasses);
+        alert(`Ошибка загрузки: не найдены классы ${missingClasses.join(', ')}. Обновите страницу (Ctrl+F5)`);
+        return;
+    }
+    
+    // VideoPreprocessor опционален
+    if (typeof VideoPreprocessor === 'undefined') {
+        console.warn('VideoPreprocessor не загружен - функция предобработки недоступна');
+    }
+    
+    try {
+        window.app = new ASCIIVideoPlayerApp();
+    } catch (error) {
+        console.error('Ошибка инициализации приложения:', error);
+        alert('Ошибка инициализации приложения. Проверьте консоль для подробностей.');
+    }
 });

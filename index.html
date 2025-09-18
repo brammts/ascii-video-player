@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASCII Video Player 🎬</title>
+    <title>Конвертер видео в ASCII-арт</title>
     <link rel="stylesheet" href="src/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -11,7 +11,7 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <h1>ASCII Video Player 📺</h1>
+            <h1>Конвертер видео в ASCII-арт</h1>
             <p>Преобразуйте видео в ASCII символы прямо в браузере</p>
         </header>
 
@@ -29,6 +29,30 @@
                             Выбрать файл
                         </button>
                     </div>
+                    
+                    <!-- Кнопка выбора нового видео (скрыта по умолчанию) -->
+                    <div class="new-video-section" id="newVideoSection" style="display: none;">
+                        <button class="new-video-btn" id="newVideoBtn">
+                            <span class="btn-icon">📁</span>
+                            <span class="btn-text">Выберите видео</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Video Loading Progress -->
+                <div class="video-loading-progress" id="videoLoadingProgress" style="display: none;">
+                    <div class="loading-content">
+                        <div class="loading-icon">⏳</div>
+                        <h3>Загрузка видео...</h3>
+                        <p id="loadingStatus">Подготовка к загрузке</p>
+                        <div class="loading-progress-bar">
+                            <div class="loading-progress-fill" id="loadingProgressFill"></div>
+                        </div>
+                        <div class="loading-details">
+                            <span id="loadingProgressText">0%</span>
+                            <span id="loadingTimeInfo">00:00</span>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -36,10 +60,6 @@
             <section class="settings-panel" id="settingsPanel" style="display: none;">
                 <div class="settings-header">
                     <h3>Настройки воспроизведения</h3>
-                    <button id="newVideoBtn" class="new-video-btn">
-                        <span class="btn-icon">📁</span>
-                        <span class="btn-text">Выбрать другое видео</span>
-                    </button>
                 </div>
                 <div class="settings-grid">
                     <div class="setting-group">
@@ -64,6 +84,42 @@
                         <small class="setting-hint">Рекомендуется: 20 для мобильных, 40 для ПК</small>
                     </div>
                     
+                    <div class="setting-group">
+                        <button id="preprocessBtn" class="control-btn preprocess-btn">
+                            <span class="btn-icon">⚡</span>
+                            <span class="btn-text">Предобработать видео</span>
+                        </button>
+                        <small class="setting-hint">Конвертирует видео в ASCII заранее для плавного воспроизведения</small>
+                    </div>
+                    
+                    <div class="setting-group" style="display: none;">
+                        <button id="clearCacheBtn" class="control-btn clear-cache-btn">
+                            <span class="btn-icon">🗑️</span>
+                            <span class="btn-text">Очистить кэш</span>
+                        </button>
+                        <small class="setting-hint">Удаляет сохраненные предобработанные видео</small>
+                    </div>
+                    
+                </div>
+            </section>
+
+            <!-- Preprocessing Progress -->
+            <section class="preprocessing-progress" id="preprocessingProgress" style="display: none;">
+                <div class="preprocessing-content">
+                    <div class="preprocessing-icon">⚡</div>
+                    <h3>Предобработка видео...</h3>
+                    <p id="preprocessingStatus">Подготовка к обработке</p>
+                    <div class="preprocessing-progress-bar">
+                        <div class="preprocessing-progress-fill" id="preprocessingProgressFill"></div>
+                    </div>
+                    <div class="preprocessing-details">
+                        <span id="preprocessingProgressText">0%</span>
+                        <span id="preprocessingFrameInfo">0 / 0 кадров</span>
+                    </div>
+                    <button id="cancelPreprocessingBtn" class="control-btn cancel-btn">
+                        <span class="btn-icon">❌</span>
+                        <span class="btn-text">Отменить</span>
+                    </button>
                 </div>
             </section>
 
@@ -106,6 +162,7 @@
                         <span class="btn-text">Остановить запись</span>
                     </button>
                     
+                    
                     <button id="copyFrameBtn" class="control-btn copy-btn" disabled>
                         <span class="btn-icon">💾</span>
                         <span class="btn-text">Сохранить кадр</span>
@@ -131,7 +188,7 @@
         <!-- Footer -->
         <footer class="footer">
             <div class="footer-content">
-                <p>ASCII Video Player - Преобразуйте любое видео в ASCII искусство</p>
+                <p>Буду рад, если подпишитесь на мой канал в Telegram :3</p>
                 <div class="footer-links">
                     <a href="https://t.me/deadmenwalkingout" target="_blank" class="telegram-link">
                         <img src="img/telegram.png" alt="Telegram" class="link-icon-img">
@@ -143,10 +200,11 @@
     </div>
 
     <!-- Scripts -->
-    <script src="src/video-processor.js"></script>
-    <script src="src/ascii-renderer.js"></script>
-    <script src="src/video-recorder.js"></script>
-    <script src="src/ascii-formatter.js"></script>
-    <script src="src/app.js"></script>
+    <script src="src/video-processor.js?v=1.4"></script>
+    <script src="src/video-preprocessor.js?v=1.4"></script>
+    <script src="src/ascii-renderer.js?v=1.4"></script>
+    <script src="src/video-recorder.js?v=1.4"></script>
+    <script src="src/ascii-formatter.js?v=1.4"></script>
+    <script src="src/app.js?v=1.4"></script>
 </body>
 </html>
