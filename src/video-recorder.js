@@ -110,6 +110,8 @@ class VideoRecorder {
             const audioElement = videoElement.cloneNode();
             audioElement.muted = false;
             audioElement.volume = 1.0;
+            audioElement.style.display = 'none';
+            document.body.appendChild(audioElement);
             
             // Создаем аудио контекст
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -279,13 +281,9 @@ class VideoRecorder {
             return;
         }
 
-        // Вычисляем время относительно начала записи
-        const recordingTime = (Date.now() - this.recordingStartTime) / 1000;
-        
-        // Синхронизируем аудио элемент с временем записи
+        // Синхронизируем аудио элемент с текущим временем
         if (this.audioElement && this.audioElement.readyState >= 2) {
             try {
-                // Устанавливаем время аудио относительно начала записи
                 this.audioElement.currentTime = currentTime;
             } catch (error) {
                 console.warn('Ошибка синхронизации аудио:', error);
@@ -301,8 +299,7 @@ class VideoRecorder {
             width: asciiWidth,
             height: asciiHeight,
             timestamp: Date.now(),
-            currentTime: currentTime,
-            recordingTime: recordingTime
+            currentTime: currentTime
         });
     }
 
@@ -355,139 +352,6 @@ class VideoRecorder {
         });
     }
 
-    /**
-     * Создает видео с обрезанным аудио
-     * @param {Blob} videoBlob - Оригинальное видео без аудио или с неправильным аудио
-     * @returns {Promise<Blob>} - Видео с правильно обрезанным аудио
-     */
-    async createVideoWithTrimmedAudio(videoBlob) {
-        if (!this.originalVideo || !this.recordingDuration) {
-            return videoBlob;
-        }
-
-        try {
-            // Создаем новый MediaRecorder с обрезанным аудио
-            const videoStream = this.canvas.captureStream(this.fps);
-            const trimmedAudioStream = await this.createTrimmedAudioStream();
-            
-            let combinedStream;
-            if (trimmedAudioStream) {
-                combinedStream = new MediaStream([
-                    ...videoStream.getVideoTracks(),
-                    ...trimmedAudioStream.getAudioTracks()
-                ]);
-            } else {
-                combinedStream = videoStream;
-            }
-
-            // Определяем лучший поддерживаемый формат
-            let mimeType = 'video/webm;codecs=vp9';
-            if (MediaRecorder.isTypeSupported('video/mp4; codecs="avc1.42E01E"')) {
-                mimeType = 'video/mp4; codecs="avc1.42E01E"';
-            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-                mimeType = 'video/webm;codecs=vp8';
-            }
-
-            const options = {
-                mimeType: mimeType,
-                videoBitsPerSecond: 2000000
-            };
-
-            if (trimmedAudioStream && trimmedAudioStream.getAudioTracks().length > 0) {
-                options.audioBitsPerSecond = 128000;
-            }
-
-            const mediaRecorder = new MediaRecorder(combinedStream, options);
-            const chunks = [];
-
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    chunks.push(event.data);
-                }
-            };
-
-            return new Promise((resolve, reject) => {
-                mediaRecorder.onstop = () => {
-                    try {
-                        const blobType = mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
-                        const trimmedBlob = new Blob(chunks, { type: blobType });
-                        resolve(trimmedBlob);
-                    } catch (error) {
-                        reject(error);
-                    }
-                };
-
-                mediaRecorder.onerror = (error) => {
-                    reject(error);
-                };
-
-                mediaRecorder.start(100);
-
-                // Воспроизводим записанные кадры с правильным аудио
-                this.playbackRecordedFramesWithAudio(mediaRecorder, resolve, reject);
-            });
-
-        } catch (error) {
-            console.warn('Ошибка создания видео с обрезанным аудио:', error);
-            return videoBlob;
-        }
-    }
-
-    /**
-     * Воспроизводит записанные кадры с синхронизированным аудио
-     * @param {MediaRecorder} mediaRecorder - Рекордер для записи
-     * @param {Function} resolve - Функция разрешения Promise
-     * @param {Function} reject - Функция отклонения Promise
-     */
-    async playbackRecordedFramesWithAudio(mediaRecorder, resolve, reject) {
-        try {
-            if (this.recordedFrames.length === 0) {
-                mediaRecorder.stop();
-                return;
-            }
-
-            // Синхронизируем аудио с началом записи
-            if (this.originalVideo && this.originalVideo.readyState >= 2) {
-                this.originalVideo.currentTime = 0;
-            }
-
-            const frameInterval = 1000 / this.fps;
-            let currentFrame = 0;
-
-            const playNextFrame = () => {
-                if (currentFrame >= this.recordedFrames.length) {
-                    // Останавливаем аудио и запись
-                    if (this.originalVideo) {
-                        this.originalVideo.pause();
-                    }
-                    mediaRecorder.stop();
-                    return;
-                }
-
-                const frame = this.recordedFrames[currentFrame];
-                
-                // Синхронизируем аудио с текущим кадром
-                if (this.originalVideo && this.originalVideo.readyState >= 2) {
-                    try {
-                        this.originalVideo.currentTime = frame.currentTime;
-                    } catch (error) {
-                        console.warn('Ошибка синхронизации аудио:', error);
-                    }
-                }
-
-                // Рендерим кадр
-                this.renderFrame(frame.ascii, frame.width, frame.height);
-                currentFrame++;
-
-                setTimeout(playNextFrame, frameInterval);
-            };
-
-            playNextFrame();
-
-        } catch (error) {
-            reject(error);
-        }
-    }
 
     /**
      * Проверяет, может ли браузер конвертировать в MP4
@@ -678,6 +542,9 @@ class VideoRecorder {
         
         if (this.audioElement) {
             this.audioElement.pause();
+            if (this.audioElement.parentNode) {
+                this.audioElement.parentNode.removeChild(this.audioElement);
+            }
             this.audioElement = null;
         }
     }
