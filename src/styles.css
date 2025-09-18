@@ -823,3 +823,53 @@ body {
 .ascii-content::-webkit-scrollbar-thumb:hover {
     background: #66BB6A;
 }
+
+/* Setting Hints */
+.setting-hint {
+    display: block;
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* Mobile Optimization */
+.mobile-optimized {
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .settings-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .control-buttons {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .control-btn {
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    .ascii-screen {
+        font-size: 8px;
+        line-height: 9px;
+    }
+    
+    .setting-hint {
+        font-size: 0.7rem;
+    }
+}

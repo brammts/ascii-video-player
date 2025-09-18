@@ -55,17 +55,15 @@
                     <div class="setting-group">
                         <label for="widthInput">Ширина (символов):</label>
                         <input type="number" id="widthInput" value="120" min="40" max="200">
+                        <small class="setting-hint">Рекомендуется: 60 для мобильных, 120 для ПК</small>
                     </div>
                     
                     <div class="setting-group">
                         <label for="heightInput">Высота (символов):</label>
                         <input type="number" id="heightInput" value="40" min="15" max="100">
+                        <small class="setting-hint">Рекомендуется: 20 для мобильных, 40 для ПК</small>
                     </div>
                     
-                    <div class="setting-group">
-                        <label for="audioToggle">Звук:</label>
-                        <input type="checkbox" id="audioToggle" checked>
-                    </div>
                 </div>
             </section>
 
@@ -109,8 +107,8 @@
                     </button>
                     
                     <button id="copyFrameBtn" class="control-btn copy-btn" disabled>
-                        <span class="btn-icon">📋</span>
-                        <span class="btn-text">Копировать кадр</span>
+                        <span class="btn-icon">💾</span>
+                        <span class="btn-text">Сохранить кадр</span>
                     </button>
                 </div>
                 
@@ -129,64 +127,6 @@
             <div class="status-messages" id="statusMessages"></div>
         </main>
 
-        <!-- Copy Frame Modal -->
-        <div class="modal-overlay" id="copyModal" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Копировать ASCII кадр</h3>
-                    <button class="modal-close" id="closeCopyModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>Выберите платформу для форматирования:</p>
-                    <div class="social-platforms">
-                        <button class="platform-btn" data-platform="discord">
-                            <span class="platform-icon">💬</span>
-                            <span class="platform-name">Discord</span>
-                            <span class="platform-desc">```\nкадр\n```</span>
-                        </button>
-                        <button class="platform-btn" data-platform="telegram">
-                            <span class="platform-icon">✈️</span>
-                            <span class="platform-name">Telegram</span>
-                            <span class="platform-desc">`кадр`</span>
-                        </button>
-                        <button class="platform-btn" data-platform="twitter">
-                            <span class="platform-icon">🐦</span>
-                            <span class="platform-name">Twitter/X</span>
-                            <span class="platform-desc">```\nкадр\n```</span>
-                        </button>
-                        <button class="platform-btn" data-platform="reddit">
-                            <span class="platform-icon">🔴</span>
-                            <span class="platform-name">Reddit</span>
-                            <span class="platform-desc">    кадр</span>
-                        </button>
-                        <button class="platform-btn" data-platform="github">
-                            <span class="platform-icon">🐙</span>
-                            <span class="platform-name">GitHub</span>
-                            <span class="platform-desc">```\nкадр\n```</span>
-                        </button>
-                        <button class="platform-btn" data-platform="plain">
-                            <span class="platform-icon">📄</span>
-                            <span class="platform-name">Обычный текст</span>
-                            <span class="platform-desc">кадр</span>
-                        </button>
-                    </div>
-                    <div class="preview-section">
-                        <h4>Предварительный просмотр:</h4>
-                        <div class="preview-content" id="previewContent">
-                            <!-- Preview will be shown here -->
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="modal-btn secondary" id="cancelCopy">Отмена</button>
-                    <a href="https://t.me/deadmenwalkingout" target="_blank" class="modal-btn telegram-btn">
-                        <img src="img/telegram.png" alt="Telegram" class="btn-icon-img">
-                        <span class="btn-text">Мой Telegram</span>
-                    </a>
-                    <button class="modal-btn primary" id="confirmCopy" disabled>Копировать</button>
-                </div>
-            </div>
-        </div>
 
         <!-- Footer -->
         <footer class="footer">

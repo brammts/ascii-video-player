@@ -10,11 +10,59 @@ class ASCIIVideoPlayerApp {
         this.currentVideo = null;
         this.isRecording = false;
         this.currentFrame = null;
-        this.selectedPlatform = null;
+        
+        // Определяем мобильное устройство
+        this.isMobile = this.detectMobileDevice();
         
         this.initializeElements();
         this.bindEvents();
         this.videoProcessor.init();
+        
+        // Показываем предупреждение для мобильных устройств
+        if (this.isMobile) {
+            this.showMobileOptimizationWarning();
+        }
+    }
+
+    /**
+     * Определяет мобильное устройство
+     */
+    detectMobileDevice() {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const isSmallScreen = window.innerWidth <= 768;
+        
+        return isMobile || (isTouchDevice && isSmallScreen);
+    }
+
+    /**
+     * Показывает предупреждение об оптимизации для мобильных устройств
+     */
+    showMobileOptimizationWarning() {
+        this.showStatus('📱 Мобильное устройство обнаружено. Используются оптимизированные настройки для лучшей производительности.', 'info');
+        
+        // Автоматически устанавливаем мобильные настройки
+        this.setMobileOptimizedSettings();
+    }
+
+    /**
+     * Устанавливает оптимизированные настройки для мобильных устройств
+     */
+    setMobileOptimizedSettings() {
+        if (this.isMobile) {
+            // Уменьшаем размеры ASCII для мобильных
+            this.widthInput.value = 60;
+            this.heightInput.value = 20;
+            
+            // Устанавливаем среднее качество для мобильных
+            this.qualitySelect.value = 'medium';
+            
+            // Обновляем настройки
+            this.updateSettings();
+            
+            this.showStatus('⚡ Настройки оптимизированы для мобильного устройства', 'success');
+        }
     }
 
     /**
@@ -41,7 +89,6 @@ class ASCIIVideoPlayerApp {
         this.qualitySelect = document.getElementById('qualitySelect');
         this.widthInput = document.getElementById('widthInput');
         this.heightInput = document.getElementById('heightInput');
-        this.audioToggle = document.getElementById('audioToggle');
         this.newVideoBtn = document.getElementById('newVideoBtn');
         
         // Прогресс
@@ -49,12 +96,6 @@ class ASCIIVideoPlayerApp {
         this.progressFill = document.getElementById('progressFill');
         this.timeInfo = document.getElementById('timeInfo');
         
-        // Модальное окно копирования
-        this.copyModal = document.getElementById('copyModal');
-        this.closeCopyModal = document.getElementById('closeCopyModal');
-        this.cancelCopy = document.getElementById('cancelCopy');
-        this.confirmCopy = document.getElementById('confirmCopy');
-        this.previewContent = document.getElementById('previewContent');
         
         // Инициализируем ASCII рендерер
         this.asciiRenderer.init(this.asciiContent, this.videoProcessor, this.videoRecorder);
@@ -85,40 +126,14 @@ class ASCIIVideoPlayerApp {
         this.stopBtn.addEventListener('click', () => this.stop());
         this.recordBtn.addEventListener('click', () => this.startRecording());
         this.stopRecordBtn.addEventListener('click', () => this.stopRecording());
-        this.copyFrameBtn.addEventListener('click', () => this.showCopyModal());
+        this.copyFrameBtn.addEventListener('click', () => this.saveFrameAsPNG());
         
         // Настройки
         this.qualitySelect.addEventListener('change', () => this.updateSettings());
         this.widthInput.addEventListener('change', () => this.updateSettings());
         this.heightInput.addEventListener('change', () => this.updateSettings());
-        this.audioToggle.addEventListener('change', () => this.updateSettings());
         this.newVideoBtn.addEventListener('click', () => this.selectNewVideo());
         
-        // Модальное окно копирования
-        this.closeCopyModal.addEventListener('click', () => this.hideCopyModal());
-        this.cancelCopy.addEventListener('click', () => this.hideCopyModal());
-        this.confirmCopy.addEventListener('click', () => this.copyFrame());
-        
-        // Обработчики для выбора платформы
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.platform-btn')) {
-                this.selectPlatform(e.target.closest('.platform-btn').dataset.platform);
-            }
-        });
-
-        // Закрытие модального окна по клику вне его
-        this.copyModal.addEventListener('click', (e) => {
-            if (e.target === this.copyModal) {
-                this.hideCopyModal();
-            }
-        });
-
-        // Закрытие модального окна по клавише Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.copyModal.style.display === 'flex') {
-                this.hideCopyModal();
-            }
-        });
     }
 
     /**
@@ -202,14 +217,18 @@ class ASCIIVideoPlayerApp {
     updateSettings() {
         if (!this.currentVideo) return;
         
+        // Оптимизируем FPS для мобильных устройств
+        const fps = this.isMobile ? 15 : 30;
+        
         const settings = {
             quality: this.qualitySelect.value,
             width: parseInt(this.widthInput.value),
             height: parseInt(this.heightInput.value),
             asciiWidth: parseInt(this.widthInput.value),
             asciiHeight: parseInt(this.heightInput.value),
-            fps: 30, // Добавляем FPS
-            enableAudio: this.audioToggle.checked
+            fps: fps,
+            enableAudio: true, // Звук всегда включен
+            isMobile: this.isMobile // Передаем информацию о мобильном устройстве
         };
         
         this.settings = settings;
@@ -426,14 +445,20 @@ class ASCIIVideoPlayerApp {
      * Получает настройки по умолчанию
      */
     getDefaultSettings() {
+        const fps = this.isMobile ? 15 : 30;
+        const width = this.isMobile ? 60 : 120;
+        const height = this.isMobile ? 20 : 40;
+        const quality = this.isMobile ? 'medium' : 'high';
+        
         return {
-            quality: 'high',
-            width: 120,
-            height: 40,
-            asciiWidth: 120,
-            asciiHeight: 40,
-            fps: 30,
-            enableAudio: true
+            quality: quality,
+            width: width,
+            height: height,
+            asciiWidth: width,
+            asciiHeight: height,
+            fps: fps,
+            enableAudio: true, // Звук всегда включен
+            isMobile: this.isMobile
         };
     }
 
@@ -524,113 +549,101 @@ class ASCIIVideoPlayerApp {
     }
 
     /**
-     * Показывает модальное окно копирования
+     * Получает текущий ASCII кадр
      */
-    showCopyModal() {
+    getCurrentFrame() {
         if (!this.currentVideo) {
             this.showStatus('Сначала загрузите видео', 'warning');
-            return;
+            return null;
         }
 
         // Получаем текущий кадр
         this.currentFrame = this.asciiContent.textContent;
         
         if (!this.currentFrame || this.currentFrame.trim().length === 0) {
-            this.showStatus('Нет кадра для копирования. Сначала воспроизведите видео', 'warning');
+            this.showStatus('Нет кадра для сохранения. Сначала воспроизведите видео', 'warning');
+            return null;
+        }
+
+        return this.currentFrame;
+    }
+
+
+    /**
+     * Сохраняет текущий ASCII кадр как PNG изображение
+     */
+    async saveFrameAsPNG() {
+        const frame = this.getCurrentFrame();
+        if (!frame) {
             return;
         }
 
-        // Сбрасываем выбор платформы
-        this.selectedPlatform = null;
-        this.updatePlatformSelection();
-        this.updatePreview();
-        
-        // Показываем модальное окно
-        this.copyModal.style.display = 'flex';
-    }
-
-    /**
-     * Скрывает модальное окно копирования
-     */
-    hideCopyModal() {
-        this.copyModal.style.display = 'none';
-        this.selectedPlatform = null;
-    }
-
-    /**
-     * Выбирает платформу для форматирования
-     */
-    selectPlatform(platform) {
-        this.selectedPlatform = platform;
-        this.updatePlatformSelection();
-        this.updatePreview();
-        this.confirmCopy.disabled = false;
-    }
-
-    /**
-     * Обновляет визуальное выделение выбранной платформы
-     */
-    updatePlatformSelection() {
-        const platformBtns = document.querySelectorAll('.platform-btn');
-        platformBtns.forEach(btn => {
-            btn.classList.remove('selected');
-            if (btn.dataset.platform === this.selectedPlatform) {
-                btn.classList.add('selected');
+        try {
+            this.showStatus('Создание PNG изображения...', 'info');
+            
+            // Создаем canvas для рендеринга ASCII
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Настройки шрифта и размеров
+            const fontSize = 12;
+            const lineHeight = 14;
+            const charWidth = 8;
+            
+            // Разбиваем ASCII на строки
+            const lines = frame.split('\n');
+            const maxLineLength = Math.max(...lines.map(line => line.length));
+            
+            // Вычисляем размеры canvas
+            const canvasWidth = maxLineLength * charWidth;
+            const canvasHeight = lines.length * lineHeight;
+            
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // Настраиваем контекст
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `${fontSize}px 'JetBrains Mono', monospace`;
+            ctx.textBaseline = 'top';
+            
+            // Рендерим каждую строку
+            for (let y = 0; y < lines.length; y++) {
+                const line = lines[y];
+                const yPos = y * lineHeight;
+                
+                for (let x = 0; x < line.length; x++) {
+                    const char = line[x];
+                    const xPos = x * charWidth;
+                    ctx.fillText(char, xPos, yPos);
+                }
             }
-        });
-    }
-
-    /**
-     * Обновляет превью форматированного кадра
-     */
-    updatePreview() {
-        if (!this.currentFrame || !this.selectedPlatform) {
-            this.previewContent.textContent = 'Выберите платформу для предварительного просмотра';
-            return;
-        }
-
-        try {
-            const preview = this.asciiFormatter.createPreview(this.currentFrame, this.selectedPlatform, 15);
-            this.previewContent.textContent = preview;
-        } catch (error) {
-            this.previewContent.textContent = `Ошибка создания превью: ${error.message}`;
-        }
-    }
-
-    /**
-     * Копирует отформатированный кадр в буфер обмена
-     */
-    async copyFrame() {
-        if (!this.currentFrame || !this.selectedPlatform) {
-            this.showStatus('Выберите платформу для копирования', 'warning');
-            return;
-        }
-
-        try {
-            // Оптимизируем кадр для платформы
-            const optimizedFrame = this.asciiFormatter.optimizeForPlatform(this.currentFrame, this.selectedPlatform, {
-                maxWidth: 80,
-                maxHeight: 40,
-                trimEmptyLines: true
+            
+            // Конвертируем canvas в PNG blob
+            const blob = await new Promise(resolve => {
+                canvas.toBlob(resolve, 'image/png', 1.0);
             });
-
-            // Форматируем для выбранной платформы
-            const formattedFrame = this.asciiFormatter.formatForPlatform(optimizedFrame, this.selectedPlatform);
             
-            // Копируем в буфер обмена
-            const success = await this.asciiFormatter.copyToClipboard(formattedFrame);
+            // Скачиваем файл
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `ascii_frame_${timestamp}.png`;
             
-            if (success) {
-                const platformInfo = this.asciiFormatter.getPlatformInfo(this.selectedPlatform);
-                this.showStatus(`Кадр скопирован для ${platformInfo.name}!`, 'success');
-                this.hideCopyModal();
-            } else {
-                this.showStatus('Ошибка копирования в буфер обмена', 'error');
-            }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            this.showStatus(`Кадр сохранен как ${filename}`, 'success');
             
         } catch (error) {
-            this.showStatus(`Ошибка копирования: ${error.message}`, 'error');
-            console.error('Ошибка копирования кадра:', error);
+            this.showStatus(`Ошибка сохранения кадра: ${error.message}`, 'error');
+            console.error('Ошибка сохранения кадра:', error);
         }
     }
 }

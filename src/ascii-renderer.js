@@ -211,6 +211,20 @@ class ASCIIRenderer {
             // Вычисляем текущее время
             const elapsed = performance.now() - this.startTime;
             this.currentTime = elapsed / 1000;
+            
+            // Оптимизация для мобильных устройств - пропускаем кадры при низкой производительности
+            if (this.settings && this.settings.isMobile) {
+                const frameTime = performance.now() - frameStartTime;
+                if (frameTime > 100) { // Если обработка кадра заняла больше 100мс
+                    // Пропускаем этот кадр для мобильных устройств
+                    setTimeout(() => {
+                        if (this.isPlaying && this.isRealtime) {
+                            this.animationId = requestAnimationFrame(() => this.renderRealtime());
+                        }
+                    }, this.frameDelay);
+                    return;
+                }
+            }
 
             // Проверяем, не закончилось ли видео
             if (this.currentTime >= this.duration) {
@@ -257,7 +271,12 @@ class ASCIIRenderer {
             // Планируем следующий кадр с ограничением FPS
             if (this.isPlaying && this.isRealtime) {
                 const frameTime = performance.now() - frameStartTime;
-                const delay = Math.max(0, this.frameDelay - frameTime);
+                let delay = Math.max(0, this.frameDelay - frameTime);
+                
+                // Дополнительная задержка для мобильных устройств для экономии батареи
+                if (this.settings && this.settings.isMobile) {
+                    delay = Math.max(delay, 50); // Минимум 50мс между кадрами на мобильных
+                }
                 
                 // Используем setTimeout для контроля FPS
                 setTimeout(() => {
