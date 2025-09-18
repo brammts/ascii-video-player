@@ -338,6 +338,7 @@
             text-align: center;
             min-width: 60px;
             animation: counterGlow 3s ease-in-out infinite;
+            transition: border-color 0.3s ease;
         }
 
         .visitor-counter.offline {
@@ -345,13 +346,34 @@
             animation: counterGlowOffline 2s ease-in-out infinite;
         }
 
+        @keyframes counterGlowOffline {
+            0%, 100% { 
+                box-shadow: 0 0 5px rgba(255, 102, 0, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 15px rgba(255, 102, 0, 0.6);
+            }
+        }
+
         .visitor-counter .status-indicator {
             width: 6px;
             height: 6px;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 4px;
+            margin-left: 4px;
             background-color: #00ff00;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
         }
 
         .visitor-counter.offline .status-indicator {
@@ -562,36 +584,51 @@
             .ascii-content {
                 font-size: 4px;
                 line-height: 0.9;
+                margin-top: 20px;
+                margin-bottom: 20px;
             }
             
             .controls {
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                right: 10px;
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 4px;
-                max-width: calc(100vw - 20px);
-                padding: 6px;
+                gap: 6px;
+                max-width: none;
+                padding: 8px;
+                z-index: 1001;
+                background-color: rgba(0, 0, 0, 0.9);
+                border-radius: 6px;
             }
             
             .control-button, .file-input-label {
-                padding: 4px 8px;
-                font-size: 10px;
+                padding: 6px 12px;
+                font-size: 11px;
+                min-height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
             #fullscreenButton {
                 order: -1;
                 width: 100%;
                 text-align: center;
-                margin-bottom: 4px;
+                margin-bottom: 6px;
+                min-height: 40px;
             }
             
             .slider-container {
                 width: 100%;
                 justify-content: space-between;
+                margin: 4px 0;
             }
             
             .slider {
-                width: 60px;
-                min-width: 40px;
+                width: 80px;
+                min-width: 60px;
             }
             
             .settings {
@@ -605,31 +642,45 @@
                 flex-wrap: wrap;
                 justify-content: space-between;
                 font-size: 9px;
-                padding: 4px;
+                padding: 6px;
+                z-index: 1000;
+                background-color: rgba(0, 0, 0, 0.9);
+                border-radius: 6px;
             }
             
             .setting-item {
                 flex: 1;
                 min-width: 0;
-                margin: 2px;
+                margin: 3px;
+                min-height: 32px;
+                display: flex;
+                align-items: center;
             }
             
             .setting-item label {
-                min-width: 40px;
-                font-size: 8px;
+                min-width: 45px;
+                font-size: 9px;
             }
 
             .color-schemes {
+                position: fixed;
                 top: 80px;
-                gap: 4px;
-                padding: 4px;
+                left: 10px;
+                right: 10px;
+                gap: 6px;
+                padding: 6px;
                 font-size: 8px;
                 flex-wrap: wrap;
+                justify-content: center;
+                z-index: 999;
+                background-color: rgba(0, 0, 0, 0.9);
+                border-radius: 6px;
             }
 
             .color-scheme-button {
-                padding: 3px 6px;
+                padding: 4px 8px;
                 font-size: 8px;
+                min-height: 28px;
             }
 
             .color-preview {
@@ -638,11 +689,15 @@
             }
 
             .visitor-counter {
-                bottom: 120px;
+                position: fixed;
+                bottom: 140px;
                 left: 10px;
-                padding: 3px 6px;
+                padding: 4px 8px;
                 font-size: 8px;
-                min-width: 50px;
+                min-width: 60px;
+                z-index: 998;
+                background-color: rgba(0, 0, 0, 0.9);
+                border-radius: 4px;
             }
 
             .visitor-counter h3 {
@@ -658,9 +713,11 @@
             }
 
             .kitten-container {
+                position: fixed;
                 bottom: 10px;
                 left: 10px;
                 font-size: 7px;
+                z-index: 997;
             }
 
             .speech-bubble {
@@ -670,16 +727,28 @@
             }
             
             .info {
-                font-size: 10px;
+                position: fixed;
                 bottom: 5px;
                 right: 5px;
-                padding: 3px 6px;
+                font-size: 10px;
+                padding: 4px 8px;
+                z-index: 996;
+                background-color: rgba(0, 0, 0, 0.9);
+                border-radius: 4px;
             }
             
             .progress {
-                width: 150px;
+                position: fixed;
                 bottom: 5px;
                 left: 5px;
+                width: 150px;
+                height: 4px;
+                z-index: 995;
+            }
+
+            .video-display {
+                padding-top: 120px;
+                padding-bottom: 120px;
             }
         }
 
@@ -688,57 +757,87 @@
             .ascii-content {
                 font-size: 3px;
                 line-height: 0.8;
+                margin-top: 30px;
+                margin-bottom: 30px;
             }
             
             .controls {
-                padding: 4px;
-                gap: 3px;
+                position: fixed;
+                top: 5px;
+                left: 5px;
+                right: 5px;
+                padding: 6px;
+                gap: 4px;
+                z-index: 1001;
+                background-color: rgba(0, 0, 0, 0.95);
+                border-radius: 8px;
             }
             
             .control-button, .file-input-label {
-                padding: 3px 6px;
-                font-size: 9px;
+                padding: 8px 12px;
+                font-size: 10px;
+                min-height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
             #fullscreenButton {
                 order: -1;
                 width: 100%;
                 text-align: center;
-                margin-bottom: 3px;
+                margin-bottom: 6px;
+                min-height: 44px;
             }
             
             .slider {
-                width: 50px;
-                min-width: 30px;
+                width: 70px;
+                min-width: 50px;
             }
             
             .settings {
+                position: fixed;
                 bottom: 5px;
                 left: 5px;
                 right: 5px;
                 font-size: 8px;
-                padding: 3px;
+                padding: 6px;
+                z-index: 1000;
+                background-color: rgba(0, 0, 0, 0.95);
+                border-radius: 8px;
             }
             
             .setting-item {
-                margin: 1px;
+                margin: 2px;
+                min-height: 36px;
+                display: flex;
+                align-items: center;
             }
             
             .setting-item label {
-                min-width: 35px;
-                font-size: 7px;
+                min-width: 40px;
+                font-size: 8px;
             }
 
             .color-schemes {
+                position: fixed;
                 top: 70px;
-                gap: 3px;
-                padding: 3px;
+                left: 5px;
+                right: 5px;
+                gap: 4px;
+                padding: 6px;
                 font-size: 7px;
+                flex-wrap: wrap;
+                justify-content: center;
+                z-index: 999;
+                background-color: rgba(0, 0, 0, 0.95);
+                border-radius: 8px;
             }
 
             .color-scheme-button {
-                padding: 2px 4px;
+                padding: 6px 8px;
                 font-size: 7px;
+                min-height: 32px;
             }
 
             .color-preview {
@@ -747,12 +846,15 @@
             }
 
             .visitor-counter {
-                bottom: 100px;
+                position: fixed;
+                bottom: 120px;
                 left: 5px;
-                padding: 2px 4px;
+                padding: 4px 6px;
                 font-size: 7px;
-                min-width: 40px;
-                z-index: 999;
+                min-width: 50px;
+                z-index: 998;
+                background-color: rgba(0, 0, 0, 0.95);
+                border-radius: 6px;
             }
 
             .visitor-counter h3 {
@@ -768,9 +870,11 @@
             }
 
             .kitten-container {
+                position: fixed;
                 bottom: 5px;
                 left: 5px;
                 font-size: 6px;
+                z-index: 997;
             }
 
             .speech-bubble {
@@ -780,17 +884,28 @@
             }
             
             .info {
-                font-size: 8px;
+                position: fixed;
                 bottom: 3px;
                 right: 3px;
-                padding: 2px 4px;
+                font-size: 8px;
+                padding: 3px 6px;
+                z-index: 996;
+                background-color: rgba(0, 0, 0, 0.95);
+                border-radius: 4px;
             }
             
             .progress {
-                width: 120px;
+                position: fixed;
                 bottom: 3px;
                 left: 3px;
+                width: 120px;
                 height: 3px;
+                z-index: 995;
+            }
+
+            .video-display {
+                padding-top: 140px;
+                padding-bottom: 140px;
             }
         }
 
@@ -880,43 +995,79 @@
             .ascii-content {
                 font-size: 2px;
                 line-height: 0.7;
+                margin-top: 40px;
+                margin-bottom: 40px;
             }
             
             .controls {
-                padding: 3px;
-                gap: 2px;
+                position: fixed;
+                top: 2px;
+                left: 2px;
+                right: 2px;
+                padding: 4px;
+                gap: 3px;
+                z-index: 1001;
+                background-color: rgba(0, 0, 0, 0.98);
+                border-radius: 6px;
             }
             
             .control-button, .file-input-label {
-                padding: 2px 4px;
-                font-size: 8px;
+                padding: 6px 8px;
+                font-size: 9px;
+                min-height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
             .slider {
-                width: 40px;
-                min-width: 25px;
+                width: 50px;
+                min-width: 35px;
             }
             
             .settings {
+                position: fixed;
+                bottom: 2px;
+                left: 2px;
+                right: 2px;
                 font-size: 7px;
-                padding: 2px;
+                padding: 4px;
+                z-index: 1000;
+                background-color: rgba(0, 0, 0, 0.98);
+                border-radius: 6px;
+            }
+            
+            .setting-item {
+                margin: 1px;
+                min-height: 32px;
+                display: flex;
+                align-items: center;
             }
             
             .setting-item label {
-                min-width: 30px;
-                font-size: 6px;
+                min-width: 35px;
+                font-size: 7px;
             }
 
             .color-schemes {
+                position: fixed;
                 top: 50px;
-                gap: 2px;
-                padding: 2px;
+                left: 2px;
+                right: 2px;
+                gap: 3px;
+                padding: 4px;
                 font-size: 6px;
+                flex-wrap: wrap;
+                justify-content: center;
+                z-index: 999;
+                background-color: rgba(0, 0, 0, 0.98);
+                border-radius: 6px;
             }
 
             .color-scheme-button {
-                padding: 1px 3px;
+                padding: 4px 6px;
                 font-size: 6px;
+                min-height: 28px;
             }
 
             .color-preview {
@@ -925,46 +1076,64 @@
             }
             
             .info {
-                font-size: 7px;
+                position: fixed;
                 bottom: 2px;
                 right: 2px;
-                padding: 1px 3px;
+                font-size: 7px;
+                padding: 2px 4px;
+                z-index: 996;
+                background-color: rgba(0, 0, 0, 0.98);
+                border-radius: 4px;
             }
             
             .progress {
-                width: 100px;
+                position: fixed;
                 bottom: 2px;
                 left: 2px;
+                width: 100px;
                 height: 2px;
+                z-index: 995;
             }
             
             #fullscreenButton {
                 order: -1;
                 width: 100%;
                 text-align: center;
-                margin-bottom: 2px;
-                padding: 2px 4px;
-                font-size: 8px;
+                margin-bottom: 4px;
+                padding: 6px 8px;
+                font-size: 9px;
+                min-height: 40px;
             }
             
             .visitor-counter {
-                bottom: 80px;
+                position: fixed;
+                bottom: 100px;
                 left: 2px;
-                padding: 1px 3px;
+                padding: 3px 5px;
                 font-size: 6px;
-                min-width: 35px;
+                min-width: 40px;
+                z-index: 998;
+                background-color: rgba(0, 0, 0, 0.98);
+                border-radius: 4px;
             }
             
             .kitten-container {
+                position: fixed;
                 bottom: 2px;
                 left: 2px;
                 font-size: 5px;
+                z-index: 997;
             }
             
             .speech-bubble {
                 max-width: 80px;
                 font-size: 6px;
                 padding: 2px 4px;
+            }
+
+            .video-display {
+                padding-top: 160px;
+                padding-bottom: 160px;
             }
         }
     </style>
@@ -1064,7 +1233,7 @@
 
     <!-- Visitor Counter -->
     <div class="visitor-counter" id="visitorCounter">
-        <h3><span class="status-indicator"></span>Посетители</h3>
+        <h3><span class="status-indicator"></span> Посетители</h3>
         <div class="visitor-count" id="visitorCount">0</div>
         <div class="visitor-label">уникальных визитов</div>
     </div>
@@ -1072,7 +1241,7 @@
     <!-- ASCII Kitten with Speech Bubble -->
     <div class="kitten-container" onclick="handleKittenClick()">
         <div class="speech-bubble">
-            Было бы здорове, если бы ты подписался на меня в Telegram! :3
+            Было бы здорово, если бы ты подписался на меня в Telegram! :3
         </div>
         <div class="kitten">
     /\_/\  
@@ -1664,7 +1833,7 @@
             }
         }
 
-        // Счетчик посещений с интеграцией Яндекс.Метрики и внешним API
+        // Счетчик посещений с интеграцией JSONBin и Яндекс.Метрики
         class VisitorCounter {
             constructor() {
                 this.storageKey = 'ascii_generator_visitor_id';
@@ -1674,16 +1843,12 @@
                 this.isNewVisitor = false;
                 this.isNewSession = false;
                 
-                // Настройки внешнего API
-                this.apiConfig = {
-                    // Используем CountAPI - бесплатный сервис для счетчиков без регистрации
-                    // Альтернативы:
-                    // 1. CountAPI (текущий): https://countapi.xyz - без регистрации
-                    // 2. JSONBin.io: https://jsonbin.io - требует регистрацию, но более надежный
-                    // 3. Firebase: https://firebase.google.com - бесплатный tier
-                    baseUrl: 'https://api.countapi.xyz',
-                    namespace: 'ascii-generator',
-                    key: 'visitor-count',
+                // JSONBin конфигурация
+                this.jsonbinConfig = {
+                    masterKey: '$2a$10$xnTX0i/kIoOj1EA3zNv3wuVEvkUf5yzv0uLNg/Lo4g85DSUaY6N9G',
+                    accessKey: '$2a$10$hdyx9/lfRlkXgBRvZmfdyuY5bBbsCEDlIzvRuESAH9N90p3a7qLOa',
+                    binId: null, // Будет создан при первом запросе
+                    baseUrl: 'https://api.jsonbin.io/v3',
                     fallbackToLocal: true
                 };
                 
@@ -1700,7 +1865,6 @@
                     visitorId = this.generateVisitorId();
                     localStorage.setItem(this.storageKey, visitorId);
                     this.isNewVisitor = true;
-                    await this.incrementCounter();
                 }
                 
                 // Проверяем новую ли это сессия
@@ -1708,6 +1872,26 @@
                     sessionId = this.generateSessionId();
                     sessionStorage.setItem(this.sessionKey, sessionId);
                     this.isNewSession = true;
+                }
+                
+                // Инициализируем JSONBin и обновляем счетчик
+                try {
+                    console.log('🔄 Инициализация JSONBin...');
+                    await this.initializeJsonBin();
+                    
+                    if (this.isNewVisitor) {
+                        console.log('👤 Новый посетитель, увеличиваем счетчик...');
+                        await this.incrementVisitorCount();
+                    }
+                    
+                    console.log('📊 Обновляем статистику посетителя...');
+                    await this.updateVisitorStats(visitorId, sessionId);
+                    console.log('✅ JSONBin успешно инициализирован и обновлен');
+                } catch (error) {
+                    console.warn('⚠️ JSONBin недоступен, используем локальное хранилище:', error.message);
+                    if (this.isNewVisitor) {
+                        this.incrementLocalCounter();
+                    }
                 }
                 
                 // Отправляем события в Яндекс.Метрику
@@ -1725,46 +1909,158 @@
                 return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             }
 
-            async incrementCounter() {
-                try {
-                    // Сначала пытаемся увеличить счетчик через внешний API
-                    const success = await this.incrementRemoteCounter();
-                    if (success) {
-                        console.log('Счетчик успешно обновлен через внешний API');
-                        return;
-                    }
-                } catch (error) {
-                    console.warn('Ошибка при обновлении внешнего счетчика:', error);
+            // Инициализация JSONBin
+            async initializeJsonBin() {
+                if (this.jsonbinConfig.binId) {
+                    return; // Уже инициализирован
                 }
                 
-                // Fallback на локальный счетчик
-                if (this.apiConfig.fallbackToLocal) {
-                    let count = parseInt(localStorage.getItem(this.counterKey)) || 0;
-                    count++;
-                    localStorage.setItem(this.counterKey, count);
-                    console.log('Используется локальный счетчик как fallback');
+                try {
+                    // Создаем новый bin для счетчика посетителей
+                    const response = await fetch(`${this.jsonbinConfig.baseUrl}/b`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': this.jsonbinConfig.masterKey,
+                            'X-Bin-Name': 'ASCII Generator Visitor Counter'
+                        },
+                        body: JSON.stringify({
+                            visitorCount: 0,
+                            visitors: [],
+                            lastUpdated: new Date().toISOString()
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.jsonbinConfig.binId = data.metadata.id;
+                        console.log('JSONBin инициализирован, ID:', this.jsonbinConfig.binId);
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка инициализации JSONBin:', error);
+                    throw error;
                 }
+            }
+
+            // Получение данных из JSONBin
+            async getJsonBinData() {
+                if (!this.jsonbinConfig.binId) {
+                    throw new Error('JSONBin не инициализирован');
+                }
+                
+                const response = await fetch(`${this.jsonbinConfig.baseUrl}/b/${this.jsonbinConfig.binId}/latest`, {
+                    headers: {
+                        'X-Access-Key': this.jsonbinConfig.accessKey
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                return data.record;
+            }
+
+            // Обновление данных в JSONBin
+            async updateJsonBinData(data) {
+                if (!this.jsonbinConfig.binId) {
+                    throw new Error('JSONBin не инициализирован');
+                }
+                
+                const response = await fetch(`${this.jsonbinConfig.baseUrl}/b/${this.jsonbinConfig.binId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': this.jsonbinConfig.masterKey
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            }
+
+            // Увеличение счетчика посетителей
+            async incrementVisitorCount() {
+                try {
+                    const data = await this.getJsonBinData();
+                    data.visitorCount++;
+                    data.lastUpdated = new Date().toISOString();
+                    await this.updateJsonBinData(data);
+                    console.log('Счетчик посетителей увеличен:', data.visitorCount);
+                } catch (error) {
+                    console.error('Ошибка увеличения счетчика:', error);
+                    throw error;
+                }
+            }
+
+            // Обновление статистики посетителя
+            async updateVisitorStats(visitorId, sessionId) {
+                try {
+                    const data = await this.getJsonBinData();
+                    const now = new Date().toISOString();
+                    
+                    // Ищем существующего посетителя
+                    let visitor = data.visitors.find(v => v.id === visitorId);
+                    
+                    if (visitor) {
+                        // Обновляем существующего посетителя
+                        visitor.lastVisit = now;
+                        visitor.visitCount++;
+                    } else {
+                        // Добавляем нового посетителя
+                        visitor = {
+                            id: visitorId,
+                            firstVisit: now,
+                            lastVisit: now,
+                            visitCount: 1,
+                            sessionId: sessionId
+                        };
+                        data.visitors.push(visitor);
+                    }
+                    
+                    data.lastUpdated = now;
+                    await this.updateJsonBinData(data);
+                    console.log('Статистика посетителя обновлена:', visitor);
+                } catch (error) {
+                    console.error('Ошибка обновления статистики:', error);
+                    throw error;
+                }
+            }
+
+            // Локальный fallback для счетчика
+            incrementLocalCounter() {
+                let count = parseInt(localStorage.getItem(this.counterKey)) || 0;
+                count++;
+                localStorage.setItem(this.counterKey, count);
+                console.log('Используется локальный счетчик:', count);
             }
 
             async loadAndDisplayCounter() {
                 try {
-                    // Пытаемся загрузить счетчик с внешнего API
-                    const remoteCount = await this.getRemoteCounter();
-                    if (remoteCount !== null) {
-                        this.visitorCountElement.textContent = remoteCount.toLocaleString();
-                        this.setOnlineStatus(true);
-                        console.log('Счетчик загружен с внешнего API:', remoteCount);
-                        
-                        // Запускаем периодическое обновление
-                        this.startPeriodicUpdate();
-                        return;
-                    }
+                    // Пытаемся загрузить счетчик из JSONBin
+                    const data = await this.getJsonBinData();
+                    const remoteCount = data.visitorCount;
+                    
+                    this.visitorCountElement.textContent = remoteCount.toLocaleString();
+                    this.setOnlineStatus(true);
+                    console.log('Счетчик загружен из JSONBin:', remoteCount);
+                    
+                    // Запускаем периодическое обновление
+                    this.startPeriodicUpdate();
+                    return;
                 } catch (error) {
-                    console.warn('Ошибка при загрузке внешнего счетчика:', error);
+                    console.warn('Ошибка при загрузке счетчика из JSONBin:', error);
                 }
                 
                 // Fallback на локальный счетчик
-                if (this.apiConfig.fallbackToLocal) {
+                if (this.jsonbinConfig.fallbackToLocal) {
                     const localCount = parseInt(localStorage.getItem(this.counterKey)) || 0;
                     this.visitorCountElement.textContent = localCount.toLocaleString();
                     this.setOnlineStatus(false);
@@ -1773,11 +2069,29 @@
             }
 
             setOnlineStatus(isOnline) {
-                const counterElement = document.getElementById('visitorCounter');
-                if (isOnline) {
-                    counterElement.classList.remove('offline');
-                } else {
-                    counterElement.classList.add('offline');
+                const counterElement = document.querySelector('.visitor-counter');
+                const statusIndicator = document.querySelector('.status-indicator');
+                
+                if (counterElement) {
+                    if (isOnline) {
+                        counterElement.classList.remove('offline');
+                        counterElement.style.borderColor = '#00ff00';
+                        counterElement.title = 'Синхронизировано с JSONBin';
+                        
+                        if (statusIndicator) {
+                            statusIndicator.style.backgroundColor = '#00ff00';
+                            statusIndicator.title = 'Онлайн';
+                        }
+                    } else {
+                        counterElement.classList.add('offline');
+                        counterElement.style.borderColor = '#ff6600';
+                        counterElement.title = 'Работает в автономном режиме';
+                        
+                        if (statusIndicator) {
+                            statusIndicator.style.backgroundColor = '#ff6600';
+                            statusIndicator.title = 'Офлайн';
+                        }
+                    }
                 }
             }
 
@@ -1785,11 +2099,10 @@
                 // Обновляем счетчик каждые 30 секунд
                 setInterval(async () => {
                     try {
-                        const remoteCount = await this.getRemoteCounter();
-                        if (remoteCount !== null) {
-                            this.visitorCountElement.textContent = remoteCount.toLocaleString();
-                            this.setOnlineStatus(true);
-                        }
+                        const data = await this.getJsonBinData();
+                        const remoteCount = data.visitorCount;
+                        this.visitorCountElement.textContent = remoteCount.toLocaleString();
+                        this.setOnlineStatus(true);
                     } catch (error) {
                         console.warn('Ошибка при периодическом обновлении счетчика:', error);
                         this.setOnlineStatus(false);
@@ -1797,65 +2110,6 @@
                 }, 30000);
             }
 
-            // Метод для переключения API провайдера
-            switchAPIProvider(provider) {
-                switch (provider) {
-                    case 'countapi':
-                        this.apiConfig = {
-                            baseUrl: 'https://api.countapi.xyz',
-                            namespace: 'ascii-generator',
-                            key: 'visitor-count',
-                            fallbackToLocal: true
-                        };
-                        break;
-                    case 'jsonbin':
-                        // Требует настройки binId и apiKey
-                        this.apiConfig = {
-                            baseUrl: 'https://api.jsonbin.io/v3/b',
-                            binId: 'YOUR_BIN_ID',
-                            apiKey: 'YOUR_API_KEY',
-                            fallbackToLocal: true
-                        };
-                        break;
-                    default:
-                        console.warn('Неизвестный провайдер API:', provider);
-                }
-            }
-
-            async incrementRemoteCounter() {
-                try {
-                    // Увеличиваем счетчик через CountAPI
-                    const response = await fetch(`${this.apiConfig.baseUrl}/hit/${this.apiConfig.namespace}/${this.apiConfig.key}`);
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        const newCount = data.value;
-                        
-                        // Анимация увеличения счетчика
-                        this.animateCounter(newCount);
-                        return true;
-                    }
-                    return false;
-                } catch (error) {
-                    console.error('Ошибка при увеличении внешнего счетчика:', error);
-                    return false;
-                }
-            }
-
-            async getRemoteCounter() {
-                try {
-                    const response = await fetch(`${this.apiConfig.baseUrl}/get/${this.apiConfig.namespace}/${this.apiConfig.key}`);
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        return data.value || 0;
-                    }
-                    return null;
-                } catch (error) {
-                    console.error('Ошибка при получении внешнего счетчика:', error);
-                    return null;
-                }
-            }
 
             animateCounter(newCount) {
                 const currentCount = parseInt(this.visitorCountElement.textContent.replace(/,/g, '')) || 0;
