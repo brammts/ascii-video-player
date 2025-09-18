@@ -1838,10 +1838,8 @@
             constructor() {
                 this.storageKey = 'ascii_generator_visitor_id';
                 this.counterKey = 'ascii_generator_visitor_count';
-                this.sessionKey = 'ascii_generator_session_id';
                 this.visitorCountElement = document.getElementById('visitorCount');
                 this.isNewVisitor = false;
-                this.isNewSession = false;
                 
                 // JSONBin конфигурация
                 this.jsonbinConfig = {
@@ -1858,20 +1856,12 @@
             async init() {
                 // Проверяем, есть ли уже ID посетителя
                 let visitorId = localStorage.getItem(this.storageKey);
-                let sessionId = sessionStorage.getItem(this.sessionKey);
                 
-                // Проверяем новый ли это посетитель
+                // Если нет ID посетителя - это новый посетитель
                 if (!visitorId) {
                     visitorId = this.generateVisitorId();
                     localStorage.setItem(this.storageKey, visitorId);
                     this.isNewVisitor = true;
-                }
-                
-                // Проверяем новую ли это сессия
-                if (!sessionId) {
-                    sessionId = this.generateSessionId();
-                    sessionStorage.setItem(this.sessionKey, sessionId);
-                    this.isNewSession = true;
                 }
                 
                 // Инициализируем JSONBin и обновляем счетчик
@@ -1879,29 +1869,12 @@
                     console.log('🔄 Инициализация JSONBin...');
                     await this.initializeJsonBin();
                     
-                    // Проверяем, действительно ли это новый посетитель в JSONBin
-                    const data = await this.getJsonBinData();
-                    const existingVisitor = data.visitors.find(v => v.id === visitorId);
-                    const isActuallyNewVisitor = !existingVisitor;
-                    
-                    console.log('📊 Проверка посетителя:', {
-                        visitorId,
-                        isNewVisitor: this.isNewVisitor,
-                        isActuallyNewVisitor,
-                        existingVisitor: !!existingVisitor
-                    });
-                    
-                    console.log('📊 Обновляем статистику посетителя...');
-                    await this.updateVisitorStats(visitorId, sessionId);
-                    
-                    if (isActuallyNewVisitor) {
-                        console.log('👤 Новый посетитель в JSONBin, увеличиваем общий счетчик...');
+                    if (this.isNewVisitor) {
+                        console.log('👤 Новый посетитель, увеличиваем счетчик...');
                         await this.incrementVisitorCount();
-                    } else {
-                        console.log('👤 Существующий посетитель, счетчик не увеличиваем');
                     }
                     
-                    console.log('✅ JSONBin успешно инициализирован и обновлен');
+                    console.log('✅ JSONBin успешно инициализирован');
                 } catch (error) {
                     console.warn('⚠️ JSONBin недоступен, используем локальное хранилище:', error.message);
                     if (this.isNewVisitor) {
@@ -1920,9 +1893,6 @@
                 return 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             }
 
-            generateSessionId() {
-                return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            }
 
             // Инициализация JSONBin
             async initializeJsonBin() {
@@ -1950,7 +1920,6 @@
                         },
                         body: JSON.stringify({
                             visitorCount: 0,
-                            visitors: [],
                             lastUpdated: new Date().toISOString()
                         })
                     });
@@ -2031,39 +2000,6 @@
                 }
             }
 
-            // Обновление статистики посетителя
-            async updateVisitorStats(visitorId, sessionId) {
-                try {
-                    const data = await this.getJsonBinData();
-                    const now = new Date().toISOString();
-                    
-                    // Ищем существующего посетителя
-                    let visitor = data.visitors.find(v => v.id === visitorId);
-                    
-                    if (visitor) {
-                        // Обновляем существующего посетителя
-                        visitor.lastVisit = now;
-                        visitor.visitCount++;
-                    } else {
-                        // Добавляем нового посетителя
-                        visitor = {
-                            id: visitorId,
-                            firstVisit: now,
-                            lastVisit: now,
-                            visitCount: 1,
-                            sessionId: sessionId
-                        };
-                        data.visitors.push(visitor);
-                    }
-                    
-                    data.lastUpdated = now;
-                    await this.updateJsonBinData(data);
-                    console.log('Статистика посетителя обновлена:', visitor);
-                } catch (error) {
-                    console.error('Ошибка обновления статистики:', error);
-                    throw error;
-                }
-            }
 
             // Локальный fallback для счетчика
             incrementLocalCounter() {
@@ -2078,12 +2014,6 @@
                     // Пытаемся загрузить счетчик из JSONBin
                     const data = await this.getJsonBinData();
                     const remoteCount = data.visitorCount || 0;
-                    
-                    console.log('📊 Данные из JSONBin:', {
-                        visitorCount: remoteCount,
-                        visitors: data.visitors?.length || 0,
-                        lastUpdated: data.lastUpdated
-                    });
                     
                     this.visitorCountElement.textContent = remoteCount.toLocaleString();
                     this.setOnlineStatus(true);
@@ -2171,19 +2101,13 @@
                         title: document.title,
                         referer: document.referrer || '',
                         userParams: {
-                            visitor_type: this.isNewVisitor ? 'new' : 'returning',
-                            session_type: this.isNewSession ? 'new_session' : 'returning_session'
+                            visitor_type: this.isNewVisitor ? 'new' : 'returning'
                         }
                     });
 
                     // Если это новый посетитель, отправляем специальное событие
                     if (this.isNewVisitor) {
                         ym(104205244, 'reachGoal', 'new_visitor');
-                    }
-
-                    // Если это новая сессия, отправляем событие
-                    if (this.isNewSession) {
-                        ym(104205244, 'reachGoal', 'new_session');
                     }
 
                     // Отправляем событие о загрузке ASCII генератора
@@ -2201,20 +2125,6 @@
                 }
             }
 
-            // Метод для сброса счетчика (для отладки)
-            async resetCounter() {
-                try {
-                    const data = await this.getJsonBinData();
-                    data.visitorCount = 0;
-                    data.visitors = [];
-                    data.lastUpdated = new Date().toISOString();
-                    await this.updateJsonBinData(data);
-                    console.log('🔄 Счетчик сброшен');
-                    await this.loadAndDisplayCounter();
-                } catch (error) {
-                    console.error('❌ Ошибка сброса счетчика:', error);
-                }
-            }
         }
 
         // Глобальная переменная для счетчика посетителей
