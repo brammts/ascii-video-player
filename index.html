@@ -340,6 +340,33 @@
             animation: counterGlow 3s ease-in-out infinite;
         }
 
+        .visitor-counter.offline {
+            border-color: #ff6600;
+            animation: counterGlowOffline 2s ease-in-out infinite;
+        }
+
+        .visitor-counter .status-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+            background-color: #00ff00;
+        }
+
+        .visitor-counter.offline .status-indicator {
+            background-color: #ff6600;
+        }
+
+        @keyframes counterGlowOffline {
+            0%, 100% { 
+                box-shadow: 0 0 5px rgba(255, 102, 0, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 15px rgba(255, 102, 0, 0.6);
+            }
+        }
+
         .visitor-counter h3 {
             margin: 0 0 3px 0;
             font-size: 10px;
@@ -1036,8 +1063,8 @@
     </div>
 
     <!-- Visitor Counter -->
-    <div class="visitor-counter">
-        <h3>Посетители</h3>
+    <div class="visitor-counter" id="visitorCounter">
+        <h3><span class="status-indicator"></span>Посетители</h3>
         <div class="visitor-count" id="visitorCount">0</div>
         <div class="visitor-label">уникальных визитов</div>
     </div>
@@ -1637,7 +1664,7 @@
             }
         }
 
-        // Счетчик посещений с интеграцией Яндекс.Метрики
+        // Счетчик посещений с интеграцией Яндекс.Метрики и внешним API
         class VisitorCounter {
             constructor() {
                 this.storageKey = 'ascii_generator_visitor_id';
@@ -1646,10 +1673,24 @@
                 this.visitorCountElement = document.getElementById('visitorCount');
                 this.isNewVisitor = false;
                 this.isNewSession = false;
+                
+                // Настройки внешнего API
+                this.apiConfig = {
+                    // Используем CountAPI - бесплатный сервис для счетчиков без регистрации
+                    // Альтернативы:
+                    // 1. CountAPI (текущий): https://countapi.xyz - без регистрации
+                    // 2. JSONBin.io: https://jsonbin.io - требует регистрацию, но более надежный
+                    // 3. Firebase: https://firebase.google.com - бесплатный tier
+                    baseUrl: 'https://api.countapi.xyz',
+                    namespace: 'ascii-generator',
+                    key: 'visitor-count',
+                    fallbackToLocal: true
+                };
+                
                 this.init();
             }
 
-            init() {
+            async init() {
                 // Проверяем, есть ли уже ID посетителя
                 let visitorId = localStorage.getItem(this.storageKey);
                 let sessionId = sessionStorage.getItem(this.sessionKey);
@@ -1659,7 +1700,7 @@
                     visitorId = this.generateVisitorId();
                     localStorage.setItem(this.storageKey, visitorId);
                     this.isNewVisitor = true;
-                    this.incrementCounter();
+                    await this.incrementCounter();
                 }
                 
                 // Проверяем новую ли это сессия
@@ -1672,8 +1713,8 @@
                 // Отправляем события в Яндекс.Метрику
                 this.sendYandexMetricsEvents();
                 
-                // Отображаем текущий счетчик
-                this.updateDisplay();
+                // Загружаем и отображаем счетчик
+                await this.loadAndDisplayCounter();
             }
 
             generateVisitorId() {
@@ -1684,18 +1725,136 @@
                 return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             }
 
-            incrementCounter() {
-                let count = parseInt(localStorage.getItem(this.counterKey)) || 0;
-                count++;
-                localStorage.setItem(this.counterKey, count);
+            async incrementCounter() {
+                try {
+                    // Сначала пытаемся увеличить счетчик через внешний API
+                    const success = await this.incrementRemoteCounter();
+                    if (success) {
+                        console.log('Счетчик успешно обновлен через внешний API');
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Ошибка при обновлении внешнего счетчика:', error);
+                }
                 
-                // Анимация увеличения счетчика
-                this.animateCounter(count);
+                // Fallback на локальный счетчик
+                if (this.apiConfig.fallbackToLocal) {
+                    let count = parseInt(localStorage.getItem(this.counterKey)) || 0;
+                    count++;
+                    localStorage.setItem(this.counterKey, count);
+                    console.log('Используется локальный счетчик как fallback');
+                }
             }
 
-            updateDisplay() {
-                const count = parseInt(localStorage.getItem(this.counterKey)) || 0;
-                this.visitorCountElement.textContent = count.toLocaleString();
+            async loadAndDisplayCounter() {
+                try {
+                    // Пытаемся загрузить счетчик с внешнего API
+                    const remoteCount = await this.getRemoteCounter();
+                    if (remoteCount !== null) {
+                        this.visitorCountElement.textContent = remoteCount.toLocaleString();
+                        this.setOnlineStatus(true);
+                        console.log('Счетчик загружен с внешнего API:', remoteCount);
+                        
+                        // Запускаем периодическое обновление
+                        this.startPeriodicUpdate();
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Ошибка при загрузке внешнего счетчика:', error);
+                }
+                
+                // Fallback на локальный счетчик
+                if (this.apiConfig.fallbackToLocal) {
+                    const localCount = parseInt(localStorage.getItem(this.counterKey)) || 0;
+                    this.visitorCountElement.textContent = localCount.toLocaleString();
+                    this.setOnlineStatus(false);
+                    console.log('Используется локальный счетчик:', localCount);
+                }
+            }
+
+            setOnlineStatus(isOnline) {
+                const counterElement = document.getElementById('visitorCounter');
+                if (isOnline) {
+                    counterElement.classList.remove('offline');
+                } else {
+                    counterElement.classList.add('offline');
+                }
+            }
+
+            startPeriodicUpdate() {
+                // Обновляем счетчик каждые 30 секунд
+                setInterval(async () => {
+                    try {
+                        const remoteCount = await this.getRemoteCounter();
+                        if (remoteCount !== null) {
+                            this.visitorCountElement.textContent = remoteCount.toLocaleString();
+                            this.setOnlineStatus(true);
+                        }
+                    } catch (error) {
+                        console.warn('Ошибка при периодическом обновлении счетчика:', error);
+                        this.setOnlineStatus(false);
+                    }
+                }, 30000);
+            }
+
+            // Метод для переключения API провайдера
+            switchAPIProvider(provider) {
+                switch (provider) {
+                    case 'countapi':
+                        this.apiConfig = {
+                            baseUrl: 'https://api.countapi.xyz',
+                            namespace: 'ascii-generator',
+                            key: 'visitor-count',
+                            fallbackToLocal: true
+                        };
+                        break;
+                    case 'jsonbin':
+                        // Требует настройки binId и apiKey
+                        this.apiConfig = {
+                            baseUrl: 'https://api.jsonbin.io/v3/b',
+                            binId: 'YOUR_BIN_ID',
+                            apiKey: 'YOUR_API_KEY',
+                            fallbackToLocal: true
+                        };
+                        break;
+                    default:
+                        console.warn('Неизвестный провайдер API:', provider);
+                }
+            }
+
+            async incrementRemoteCounter() {
+                try {
+                    // Увеличиваем счетчик через CountAPI
+                    const response = await fetch(`${this.apiConfig.baseUrl}/hit/${this.apiConfig.namespace}/${this.apiConfig.key}`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const newCount = data.value;
+                        
+                        // Анимация увеличения счетчика
+                        this.animateCounter(newCount);
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Ошибка при увеличении внешнего счетчика:', error);
+                    return false;
+                }
+            }
+
+            async getRemoteCounter() {
+                try {
+                    const response = await fetch(`${this.apiConfig.baseUrl}/get/${this.apiConfig.namespace}/${this.apiConfig.key}`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.value || 0;
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Ошибка при получении внешнего счетчика:', error);
+                    return null;
+                }
             }
 
             animateCounter(newCount) {
