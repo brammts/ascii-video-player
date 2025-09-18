@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Video Player 🎬</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>ASCII Video Player 📺</h1>
+            <p>Преобразуйте видео в ASCII символы прямо в браузере</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Video Upload Section -->
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <div class="upload-icon">📁</div>
+                        <h3>Выберите видеофайл</h3>
+                        <p>Поддерживаемые форматы: MP4, AVI, MOV, MKV, WMV</p>
+                        <input type="file" id="videoInput" accept="video/*" hidden>
+                        <button class="upload-btn">
+                            Выбрать файл
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Panel -->
+            <section class="settings-panel" id="settingsPanel" style="display: none;">
+                <div class="settings-header">
+                    <h3>Настройки воспроизведения</h3>
+                    <button id="newVideoBtn" class="new-video-btn">
+                        <span class="btn-icon">📁</span>
+                        <span class="btn-text">Выбрать другое видео</span>
+                    </button>
+                </div>
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label for="qualitySelect">Качество:</label>
+                        <select id="qualitySelect">
+                            <option value="low">Низкое (быстро)</option>
+                            <option value="medium">Среднее</option>
+                            <option value="high" selected>Высокое</option>
+                            <option value="ultra">Ультра</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="widthInput">Ширина (символов):</label>
+                        <input type="number" id="widthInput" value="120" min="40" max="200">
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="heightInput">Высота (символов):</label>
+                        <input type="number" id="heightInput" value="40" min="15" max="100">
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="audioToggle">Звук:</label>
+                        <input type="checkbox" id="audioToggle" checked>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ASCII Display -->
+            <section class="ascii-display-section" id="asciiDisplaySection" style="display: none;">
+                <div class="ascii-container">
+                    <div class="ascii-screen" id="asciiScreen">
+                        <div class="ascii-content" id="asciiContent">
+                            <!-- ASCII content will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Controls -->
+            <section class="controls" id="controls" style="display: none;">
+                <div class="control-buttons">
+                    <button id="playBtn" class="control-btn play-btn">
+                        <span class="btn-icon">▶️</span>
+                        <span class="btn-text">Воспроизвести</span>
+                    </button>
+                    
+                    <button id="pauseBtn" class="control-btn pause-btn" disabled>
+                        <span class="btn-icon">⏸️</span>
+                        <span class="btn-text">Пауза</span>
+                    </button>
+                    
+                    <button id="stopBtn" class="control-btn stop-btn" disabled>
+                        <span class="btn-icon">⏹️</span>
+                        <span class="btn-text">Стоп</span>
+                    </button>
+                    
+                    <button id="recordBtn" class="control-btn record-btn" disabled>
+                        <span class="btn-icon">🔴</span>
+                        <span class="btn-text">Записать MP4</span>
+                    </button>
+                    
+                    <button id="stopRecordBtn" class="control-btn stop-record-btn" disabled>
+                        <span class="btn-icon">⏹️</span>
+                        <span class="btn-text">Остановить запись</span>
+                    </button>
+                    
+                    <button id="copyFrameBtn" class="control-btn copy-btn" disabled>
+                        <span class="btn-icon">📋</span>
+                        <span class="btn-text">Копировать кадр</span>
+                    </button>
+                </div>
+                
+                <div class="progress-section">
+                    <div class="progress-info">
+                        <span id="progressText">Готов к воспроизведению</span>
+                        <span id="timeInfo">00:00 / 00:00</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Status Messages -->
+            <div class="status-messages" id="statusMessages"></div>
+        </main>
+
+        <!-- Copy Frame Modal -->
+        <div class="modal-overlay" id="copyModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Копировать ASCII кадр</h3>
+                    <button class="modal-close" id="closeCopyModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Выберите платформу для форматирования:</p>
+                    <div class="social-platforms">
+                        <button class="platform-btn" data-platform="discord">
+                            <span class="platform-icon">💬</span>
+                            <span class="platform-name">Discord</span>
+                            <span class="platform-desc">```\nкадр\n```</span>
+                        </button>
+                        <button class="platform-btn" data-platform="telegram">
+                            <span class="platform-icon">✈️</span>
+                            <span class="platform-name">Telegram</span>
+                            <span class="platform-desc">`кадр`</span>
+                        </button>
+                        <button class="platform-btn" data-platform="twitter">
+                            <span class="platform-icon">🐦</span>
+                            <span class="platform-name">Twitter/X</span>
+                            <span class="platform-desc">```\nкадр\n```</span>
+                        </button>
+                        <button class="platform-btn" data-platform="reddit">
+                            <span class="platform-icon">🔴</span>
+                            <span class="platform-name">Reddit</span>
+                            <span class="platform-desc">    кадр</span>
+                        </button>
+                        <button class="platform-btn" data-platform="github">
+                            <span class="platform-icon">🐙</span>
+                            <span class="platform-name">GitHub</span>
+                            <span class="platform-desc">```\nкадр\n```</span>
+                        </button>
+                        <button class="platform-btn" data-platform="plain">
+                            <span class="platform-icon">📄</span>
+                            <span class="platform-name">Обычный текст</span>
+                            <span class="platform-desc">кадр</span>
+                        </button>
+                    </div>
+                    <div class="preview-section">
+                        <h4>Предварительный просмотр:</h4>
+                        <div class="preview-content" id="previewContent">
+                            <!-- Preview will be shown here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-btn secondary" id="cancelCopy">Отмена</button>
+                    <a href="https://t.me/deadmenwalkingout" target="_blank" class="modal-btn telegram-btn">
+                        <img src="../img/telegram.png" alt="Telegram" class="btn-icon-img">
+                        <span class="btn-text">Мой Telegram</span>
+                    </a>
+                    <button class="modal-btn primary" id="confirmCopy" disabled>Копировать</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>ASCII Video Player - Преобразуйте любое видео в ASCII искусство</p>
+                <div class="footer-links">
+                    <a href="https://t.me/deadmenwalkingout" target="_blank" class="telegram-link">
+                        <img src="../img/telegram.png" alt="Telegram" class="link-icon-img">
+                        <span class="link-text">Мой Telegram</span>
+                    </a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="video-processor.js"></script>
+    <script src="ascii-renderer.js"></script>
+    <script src="video-recorder.js"></script>
+    <script src="ascii-formatter.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
