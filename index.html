@@ -160,8 +160,29 @@
             text-align: center;
             max-width: 100%;
             max-height: 100%;
-            overflow: hidden;
+            overflow: auto;
             filter: contrast(1.2) brightness(1.1);
+            word-break: break-all;
+            scrollbar-width: thin;
+            scrollbar-color: #00ff00 #333;
+        }
+        
+        .ascii-content::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        
+        .ascii-content::-webkit-scrollbar-track {
+            background: #333;
+        }
+        
+        .ascii-content::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 2px;
+        }
+        
+        .ascii-content::-webkit-scrollbar-thumb:hover {
+            background: #00cc00;
         }
 
         .loading {
@@ -191,6 +212,11 @@
             font-size: 12px;
             color: #666;
             z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            line-height: 1.2;
         }
 
         .kitten-container {
@@ -336,6 +362,7 @@
             background-color: #333;
             border: 1px solid #00ff00;
             z-index: 1000;
+            border-radius: 2px;
         }
 
         .progress-bar {
@@ -411,6 +438,10 @@
                 min-width: 45px;
                 font-size: 9px;
             }
+            
+            .ascii-content {
+                font-size: 5px;
+            }
         }
 
         /* Планшеты в портретной ориентации */
@@ -431,6 +462,13 @@
             .control-button, .file-input-label {
                 padding: 4px 8px;
                 font-size: 10px;
+            }
+            
+            #fullscreenButton {
+                order: -1;
+                width: 100%;
+                text-align: center;
+                margin-bottom: 4px;
             }
             
             .slider-container {
@@ -504,6 +542,13 @@
                 font-size: 10px;
                 bottom: 5px;
                 right: 5px;
+                padding: 3px 6px;
+            }
+            
+            .progress {
+                width: 150px;
+                bottom: 5px;
+                left: 5px;
             }
         }
 
@@ -522,6 +567,13 @@
             .control-button, .file-input-label {
                 padding: 3px 6px;
                 font-size: 9px;
+            }
+            
+            #fullscreenButton {
+                order: -1;
+                width: 100%;
+                text-align: center;
+                margin-bottom: 3px;
             }
             
             .slider {
@@ -552,6 +604,7 @@
                 padding: 2px 4px;
                 font-size: 7px;
                 min-width: 40px;
+                z-index: 999;
             }
 
             .visitor-counter h3 {
@@ -582,6 +635,78 @@
                 font-size: 8px;
                 bottom: 3px;
                 right: 3px;
+                padding: 2px 4px;
+            }
+            
+            .progress {
+                width: 120px;
+                bottom: 3px;
+                left: 3px;
+                height: 3px;
+            }
+        }
+
+        /* Ландшафтная ориентация мобильных устройств */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 4px;
+                padding: 4px;
+                max-width: calc(100vw - 20px);
+            }
+            
+            .settings {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                bottom: auto;
+                left: auto;
+                max-width: 200px;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .visitor-counter {
+                bottom: 10px;
+                left: 10px;
+                padding: 2px 4px;
+                font-size: 7px;
+            }
+            
+            .kitten-container {
+                bottom: 10px;
+                left: 10px;
+                font-size: 6px;
+            }
+            
+            .speech-bubble {
+                max-width: 100px;
+                font-size: 7px;
+                padding: 3px 6px;
+            }
+            
+            .info {
+                bottom: 5px;
+                right: 5px;
+                font-size: 9px;
+            }
+            
+            .progress {
+                width: 150px;
+                bottom: 5px;
+                left: 5px;
+            }
+            
+            .ascii-content {
+                font-size: 3px;
+                line-height: 0.8;
+            }
+            
+            #fullscreenButton {
+                order: 0;
+                width: auto;
+                margin-bottom: 0;
             }
         }
 
@@ -615,6 +740,49 @@
             .setting-item label {
                 min-width: 30px;
                 font-size: 6px;
+            }
+            
+            .info {
+                font-size: 7px;
+                bottom: 2px;
+                right: 2px;
+                padding: 1px 3px;
+            }
+            
+            .progress {
+                width: 100px;
+                bottom: 2px;
+                left: 2px;
+                height: 2px;
+            }
+            
+            #fullscreenButton {
+                order: -1;
+                width: 100%;
+                text-align: center;
+                margin-bottom: 2px;
+                padding: 2px 4px;
+                font-size: 8px;
+            }
+            
+            .visitor-counter {
+                bottom: 80px;
+                left: 2px;
+                padding: 1px 3px;
+                font-size: 6px;
+                min-width: 35px;
+            }
+            
+            .kitten-container {
+                bottom: 2px;
+                left: 2px;
+                font-size: 5px;
+            }
+            
+            .speech-bubble {
+                max-width: 80px;
+                font-size: 6px;
+                padding: 2px 4px;
             }
         }
     </style>
@@ -763,6 +931,9 @@
                 this.brightnessSlider.addEventListener('input', (e) => this.updateBrightness(e.target.value));
                 this.audioToggle.addEventListener('click', () => this.toggleAudio());
                 this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value / 100));
+                
+                // Обработчик изменения размера окна для адаптивности
+                window.addEventListener('resize', () => this.handleResize());
             }
 
             handleFileSelect(event) {
@@ -804,18 +975,46 @@
                 this.canvas = document.createElement('canvas');
                 this.ctx = this.canvas.getContext('2d');
                 
-                const maxWidth = window.innerWidth - 20;
-                const maxHeight = window.innerHeight - 100;
+                // Адаптивные размеры в зависимости от размера экрана
+                const isMobile = window.innerWidth <= 768;
+                const isSmallMobile = window.innerWidth <= 480;
+                const isVerySmall = window.innerWidth <= 320;
+                
+                let maxWidth, maxHeight;
+                
+                if (isVerySmall) {
+                    maxWidth = window.innerWidth - 10;
+                    maxHeight = window.innerHeight - 80;
+                } else if (isSmallMobile) {
+                    maxWidth = window.innerWidth - 15;
+                    maxHeight = window.innerHeight - 90;
+                } else if (isMobile) {
+                    maxWidth = window.innerWidth - 20;
+                    maxHeight = window.innerHeight - 100;
+                } else {
+                    maxWidth = window.innerWidth - 40;
+                    maxHeight = window.innerHeight - 120;
+                }
                 
                 const videoAspect = this.video.videoWidth / this.video.videoHeight;
                 const screenAspect = maxWidth / maxHeight;
                 
+                // Адаптивный размер в зависимости от устройства
+                let adaptiveSize = this.settings.size;
+                if (isVerySmall) {
+                    adaptiveSize = Math.min(adaptiveSize, 80);
+                } else if (isSmallMobile) {
+                    adaptiveSize = Math.min(adaptiveSize, 120);
+                } else if (isMobile) {
+                    adaptiveSize = Math.min(adaptiveSize, 150);
+                }
+                
                 let canvasWidth, canvasHeight;
                 if (videoAspect > screenAspect) {
-                    canvasWidth = Math.min(maxWidth, this.settings.size);
+                    canvasWidth = Math.min(maxWidth, adaptiveSize);
                     canvasHeight = canvasWidth / videoAspect;
                 } else {
-                    canvasHeight = Math.min(maxHeight, this.settings.size);
+                    canvasHeight = Math.min(maxHeight, adaptiveSize);
                     canvasWidth = canvasHeight * videoAspect;
                 }
                 
@@ -1015,6 +1214,13 @@
                     this.audio.volume = volume;
                 }
                 this.volumeDisplay.textContent = Math.round(volume * 100) + '%';
+            }
+
+            handleResize() {
+                // Пересоздаем canvas при изменении размера окна
+                if (this.video) {
+                    this.setupCanvas();
+                }
             }
         }
 
