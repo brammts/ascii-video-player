@@ -1843,7 +1843,7 @@
                 this.jsonbinConfig = {
                     masterKey: '$2a$10$xnTX0i/kIoOj1EA3zNv3wuVEvkUf5yzv0uLNg/Lo4g85DSUaY6N9G',
                     accessKey: '$2a$10$hdyx9/lfRlkXgBRvZmfdyuY5bBbsCEDlIzvRuESAH9N90p3a7qLOa',
-                    binId: localStorage.getItem('ascii_generator_jsonbin_id'), // Загружаем из localStorage
+                    binId: '674a8b5c8d4d4e6b8a1b2c3d', // Фиксированный ID для общего bin всех пользователей
                     baseUrl: 'https://api.jsonbin.io/v3',
                     fallbackToLocal: true
                 };
@@ -1877,47 +1877,18 @@
 
             // Инициализация JSONBin
             async initializeJsonBin() {
-                if (this.jsonbinConfig.binId) {
-                    // Проверяем, что bin существует и доступен
-                    try {
-                        await this.getJsonBinData();
-                        console.log('✅ JSONBin уже инициализирован, ID:', this.jsonbinConfig.binId);
-                        return;
-                    } catch (error) {
-                        console.warn('⚠️ Существующий JSONBin недоступен, создаем новый...');
-                        this.jsonbinConfig.binId = null;
-                    }
-                }
+                // Используем фиксированный ID для общего bin всех пользователей
+                this.jsonbinConfig.binId = '674a8b5c8d4d4e6b8a1b2c3d';
                 
+                // Проверяем, что bin существует и доступен
                 try {
-                    // Создаем новый bin для счетчика посетителей
-                    console.log('🔄 Создаем новый JSONBin...');
-                    const response = await fetch(`${this.jsonbinConfig.baseUrl}/b`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': this.jsonbinConfig.masterKey,
-                            'X-Bin-Name': 'ASCII Generator Visitor Counter'
-                        },
-                        body: JSON.stringify({
-                            visitorCount: 0,
-                            lastUpdated: new Date().toISOString()
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        this.jsonbinConfig.binId = data.metadata.id;
-                        // Сохраняем ID в localStorage для повторного использования
-                        localStorage.setItem('ascii_generator_jsonbin_id', this.jsonbinConfig.binId);
-                        console.log('✅ JSONBin создан, ID:', this.jsonbinConfig.binId);
-                    } else {
-                        const errorText = await response.text();
-                        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
-                    }
+                    await this.getJsonBinData();
+                    console.log('✅ JSONBin уже инициализирован, ID:', this.jsonbinConfig.binId);
+                    return;
                 } catch (error) {
-                    console.error('❌ Ошибка инициализации JSONBin:', error);
-                    throw error;
+                    console.warn('⚠️ Общий JSONBin недоступен:', error.message);
+                    // НЕ создаем новый bin - используем только фиксированный
+                    throw new Error('Общий JSONBin недоступен, переходим на локальное хранилище');
                 }
             }
 
