@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASCII Video Player - Advanced</title>
+    
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){
+            m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+        })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=104205244', 'ym');
+
+        ym(104205244, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", accurateTrackBounce:true, trackLinks:true});
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/104205244" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+    
     <style>
         * {
             margin: 0;
@@ -388,6 +403,61 @@
             max-width: 200px;
         }
 
+        .color-schemes {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            display: flex;
+            gap: 8px;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: calc(100vw - 20px);
+            overflow: hidden;
+        }
+
+        .color-scheme-button {
+            background-color: #333;
+            color: #00ff00;
+            padding: 6px 12px;
+            border: 1px solid #00ff00;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            transition: all 0.3s;
+            border-radius: 3px;
+            white-space: nowrap;
+            min-width: fit-content;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-scheme-button:hover {
+            background-color: #444;
+            transform: scale(1.05);
+        }
+
+        .color-scheme-button.active {
+            background-color: #00ff00;
+            color: #000;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+        }
+
+        .color-preview {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 4px;
+            vertical-align: middle;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
         .setting-item {
             display: flex;
             align-items: center;
@@ -441,6 +511,22 @@
             
             .ascii-content {
                 font-size: 5px;
+            }
+
+            .color-schemes {
+                gap: 6px;
+                padding: 6px;
+                font-size: 9px;
+            }
+
+            .color-scheme-button {
+                padding: 4px 8px;
+                font-size: 9px;
+            }
+
+            .color-preview {
+                width: 10px;
+                height: 10px;
             }
         }
 
@@ -504,6 +590,24 @@
             .setting-item label {
                 min-width: 40px;
                 font-size: 8px;
+            }
+
+            .color-schemes {
+                top: 80px;
+                gap: 4px;
+                padding: 4px;
+                font-size: 8px;
+                flex-wrap: wrap;
+            }
+
+            .color-scheme-button {
+                padding: 3px 6px;
+                font-size: 8px;
+            }
+
+            .color-preview {
+                width: 8px;
+                height: 8px;
             }
 
             .visitor-counter {
@@ -598,6 +702,23 @@
                 font-size: 7px;
             }
 
+            .color-schemes {
+                top: 70px;
+                gap: 3px;
+                padding: 3px;
+                font-size: 7px;
+            }
+
+            .color-scheme-button {
+                padding: 2px 4px;
+                font-size: 7px;
+            }
+
+            .color-preview {
+                width: 6px;
+                height: 6px;
+            }
+
             .visitor-counter {
                 bottom: 100px;
                 left: 5px;
@@ -665,6 +786,23 @@
                 max-width: 200px;
                 flex-direction: row;
                 flex-wrap: wrap;
+            }
+
+            .color-schemes {
+                top: 60px;
+                gap: 3px;
+                padding: 3px;
+                font-size: 7px;
+            }
+
+            .color-scheme-button {
+                padding: 2px 4px;
+                font-size: 7px;
+            }
+
+            .color-preview {
+                width: 6px;
+                height: 6px;
             }
             
             .visitor-counter {
@@ -741,6 +879,23 @@
                 min-width: 30px;
                 font-size: 6px;
             }
+
+            .color-schemes {
+                top: 50px;
+                gap: 2px;
+                padding: 2px;
+                font-size: 6px;
+            }
+
+            .color-scheme-button {
+                padding: 1px 3px;
+                font-size: 6px;
+            }
+
+            .color-preview {
+                width: 4px;
+                height: 4px;
+            }
             
             .info {
                 font-size: 7px;
@@ -811,6 +966,33 @@
             </div>
         </div>
 
+        <div class="color-schemes">
+            <button class="color-scheme-button active" data-scheme="matrix">
+                <span class="color-preview" style="background: linear-gradient(45deg, #00ff00, #00cc00);"></span>
+                Matrix
+            </button>
+            <button class="color-scheme-button" data-scheme="cyberpunk">
+                <span class="color-preview" style="background: linear-gradient(45deg, #ff0080, #00ffff);"></span>
+                Cyberpunk
+            </button>
+            <button class="color-scheme-button" data-scheme="retro">
+                <span class="color-preview" style="background: linear-gradient(45deg, #ff6b35, #f7931e);"></span>
+                Retro
+            </button>
+            <button class="color-scheme-button" data-scheme="neon">
+                <span class="color-preview" style="background: linear-gradient(45deg, #00ffff, #ff00ff);"></span>
+                Neon
+            </button>
+            <button class="color-scheme-button" data-scheme="monochrome">
+                <span class="color-preview" style="background: linear-gradient(45deg, #ffffff, #808080);"></span>
+                Monochrome
+            </button>
+            <button class="color-scheme-button" data-scheme="fire">
+                <span class="color-preview" style="background: linear-gradient(45deg, #ff0000, #ffff00);"></span>
+                Fire
+            </button>
+        </div>
+
         <div class="settings">
             <div class="setting-item">
                 <label>Качество:</label>
@@ -861,7 +1043,7 @@
     </div>
 
     <!-- ASCII Kitten with Speech Bubble -->
-    <div class="kitten-container" onclick="window.open('https://t.me/deadmenwalkingout', '_blank')">
+    <div class="kitten-container" onclick="handleKittenClick()">
         <div class="speech-bubble">
             Было бы здорове, если бы ты подписался на меня в Telegram! :3
         </div>
@@ -893,8 +1075,63 @@
                     brightness: 1.1
                 };
                 
+                // Цветовые схемы
+                this.colorSchemes = {
+                    matrix: {
+                        name: 'Matrix',
+                        primary: '#00ff00',
+                        secondary: '#00cc00',
+                        background: '#000000',
+                        accent: '#00ff00',
+                        ascii: [' .:-=+*#%@']
+                    },
+                    cyberpunk: {
+                        name: 'Cyberpunk',
+                        primary: '#ff0080',
+                        secondary: '#00ffff',
+                        background: '#000000',
+                        accent: '#ff0080',
+                        ascii: [' .:░▒▓█']
+                    },
+                    retro: {
+                        name: 'Retro',
+                        primary: '#ff6b35',
+                        secondary: '#f7931e',
+                        background: '#000000',
+                        accent: '#ff6b35',
+                        ascii: [' .:-=+*#%@']
+                    },
+                    neon: {
+                        name: 'Neon',
+                        primary: '#00ffff',
+                        secondary: '#ff00ff',
+                        background: '#000000',
+                        accent: '#00ffff',
+                        ascii: [' .:░▒▓█']
+                    },
+                    monochrome: {
+                        name: 'Monochrome',
+                        primary: '#ffffff',
+                        secondary: '#808080',
+                        background: '#000000',
+                        accent: '#ffffff',
+                        ascii: [' .:-=+*#%@']
+                    },
+                    fire: {
+                        name: 'Fire',
+                        primary: '#ff0000',
+                        secondary: '#ffff00',
+                        background: '#000000',
+                        accent: '#ff0000',
+                        ascii: [' .:░▒▓█']
+                    }
+                };
+                
+                this.currentColorScheme = 'matrix';
+                
                 this.initializeElements();
                 this.setupEventListeners();
+                this.loadColorScheme();
             }
 
             initializeElements() {
@@ -932,6 +1169,11 @@
                 this.audioToggle.addEventListener('click', () => this.toggleAudio());
                 this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value / 100));
                 
+                // Обработчики для цветовых схем
+                document.querySelectorAll('.color-scheme-button').forEach(button => {
+                    button.addEventListener('click', (e) => this.changeColorScheme(e.target.dataset.scheme));
+                });
+                
                 // Обработчик изменения размера окна для адаптивности
                 window.addEventListener('resize', () => this.handleResize());
             }
@@ -939,6 +1181,15 @@
             handleFileSelect(event) {
                 const file = event.target.files[0];
                 if (!file) return;
+
+                // Отслеживаем загрузку видео
+                if (this.visitorCounter) {
+                    this.visitorCounter.trackUserAction('video_uploaded', {
+                        file_name: file.name,
+                        file_size: file.size,
+                        file_type: file.type
+                    });
+                }
 
                 this.showLoading();
                 this.hideError();
@@ -1058,6 +1309,155 @@
                 this.asciiContent.style.filter = `contrast(${this.settings.contrast}) brightness(${this.settings.brightness})`;
             }
 
+            changeColorScheme(schemeName) {
+                if (!this.colorSchemes[schemeName]) return;
+                
+                // Отслеживаем смену цветовой схемы
+                if (this.visitorCounter) {
+                    this.visitorCounter.trackUserAction('color_scheme_changed', {
+                        scheme_name: schemeName
+                    });
+                }
+                
+                this.currentColorScheme = schemeName;
+                const scheme = this.colorSchemes[schemeName];
+                
+                // Обновляем активную кнопку
+                document.querySelectorAll('.color-scheme-button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                document.querySelector(`[data-scheme="${schemeName}"]`).classList.add('active');
+                
+                // Применяем цветовую схему
+                this.applyColorScheme(scheme);
+                
+                // Сохраняем выбор
+                this.saveColorScheme();
+            }
+
+            applyColorScheme(scheme) {
+                // Обновляем CSS переменные
+                document.documentElement.style.setProperty('--primary-color', scheme.primary);
+                document.documentElement.style.setProperty('--secondary-color', scheme.secondary);
+                document.documentElement.style.setProperty('--accent-color', scheme.accent);
+                document.documentElement.style.setProperty('--background-color', scheme.background);
+                
+                // Применяем цвета к элементам интерфейса
+                const style = document.createElement('style');
+                style.textContent = `
+                    body {
+                        background-color: ${scheme.background} !important;
+                        color: ${scheme.primary} !important;
+                    }
+                    
+                    .controls, .settings, .color-schemes {
+                        background-color: rgba(0, 0, 0, 0.8) !important;
+                        border-color: ${scheme.primary}33 !important;
+                    }
+                    
+                    .control-button, .file-input-label, .color-scheme-button {
+                        background-color: #333 !important;
+                        color: ${scheme.primary} !important;
+                        border-color: ${scheme.primary} !important;
+                    }
+                    
+                    .control-button:hover, .file-input-label:hover, .color-scheme-button:hover {
+                        background-color: #444 !important;
+                    }
+                    
+                    .control-button.active, .color-scheme-button.active {
+                        background-color: ${scheme.primary} !important;
+                        color: #000 !important;
+                        box-shadow: 0 0 5px ${scheme.primary}50 !important;
+                    }
+                    
+                    .slider::-webkit-slider-thumb {
+                        background-color: ${scheme.primary} !important;
+                    }
+                    
+                    .ascii-content {
+                        color: ${scheme.primary} !important;
+                    }
+                    
+                    .loading, .info {
+                        color: ${scheme.primary} !important;
+                    }
+                    
+                    .error {
+                        color: #ff0000 !important;
+                    }
+                    
+                    .progress-bar {
+                        background-color: ${scheme.primary} !important;
+                    }
+                    
+                    .visitor-counter {
+                        background-color: #333 !important;
+                        border-color: ${scheme.primary} !important;
+                        color: ${scheme.primary} !important;
+                    }
+                    
+                    .visitor-counter h3 {
+                        color: ${scheme.primary} !important;
+                    }
+                    
+                    .visitor-count {
+                        color: ${scheme.primary} !important;
+                        text-shadow: 0 0 3px ${scheme.primary}80 !important;
+                    }
+                    
+                    .kitten-container {
+                        color: ${scheme.primary} !important;
+                    }
+                    
+                    .speech-bubble {
+                        background-color: #333 !important;
+                        border-color: ${scheme.primary} !important;
+                        color: ${scheme.primary} !important;
+                    }
+                    
+                    .speech-bubble::after {
+                        border-top-color: #333 !important;
+                    }
+                    
+                    .speech-bubble::before {
+                        border-top-color: ${scheme.primary} !important;
+                    }
+                    
+                    .setting-item select {
+                        background-color: #333 !important;
+                        color: ${scheme.primary} !important;
+                        border-color: ${scheme.primary} !important;
+                    }
+                    
+                    .ascii-content::-webkit-scrollbar-thumb {
+                        background: ${scheme.primary} !important;
+                    }
+                `;
+                
+                // Удаляем предыдущий стиль если есть
+                const existingStyle = document.getElementById('color-scheme-style');
+                if (existingStyle) {
+                    existingStyle.remove();
+                }
+                
+                style.id = 'color-scheme-style';
+                document.head.appendChild(style);
+            }
+
+            loadColorScheme() {
+                const savedScheme = localStorage.getItem('ascii_generator_color_scheme');
+                if (savedScheme && this.colorSchemes[savedScheme]) {
+                    this.changeColorScheme(savedScheme);
+                } else {
+                    this.changeColorScheme('matrix');
+                }
+            }
+
+            saveColorScheme() {
+                localStorage.setItem('ascii_generator_color_scheme', this.currentColorScheme);
+            }
+
             togglePlayPause() {
                 if (!this.video) return;
 
@@ -1070,6 +1470,11 @@
 
             play() {
                 if (!this.video) return;
+
+                // Отслеживаем воспроизведение
+                if (this.visitorCounter) {
+                    this.visitorCounter.trackUserAction('video_play');
+                }
 
                 this.video.play();
                 if (this.audio && this.audioEnabled) {
@@ -1103,6 +1508,13 @@
             }
 
             toggleFullscreen() {
+                // Отслеживаем переход в полноэкранный режим
+                if (this.visitorCounter) {
+                    this.visitorCounter.trackUserAction('fullscreen_toggled', {
+                        action: !document.fullscreenElement ? 'enter' : 'exit'
+                    });
+                }
+                
                 if (!document.fullscreenElement) {
                     document.documentElement.requestFullscreen();
                     this.fullscreenButton.textContent = 'Выход';
@@ -1142,7 +1554,8 @@
             canvasToASCII() {
                 const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
                 const data = imageData.data;
-                const asciiChars = ' .:-=+*#%@';
+                const currentScheme = this.colorSchemes[this.currentColorScheme];
+                const asciiChars = currentScheme.ascii[0];
                 let ascii = '';
 
                 // Применяем настройки качества
@@ -1224,27 +1637,40 @@
             }
         }
 
-        // Счетчик посещений
+        // Счетчик посещений с интеграцией Яндекс.Метрики
         class VisitorCounter {
             constructor() {
                 this.storageKey = 'ascii_generator_visitor_id';
                 this.counterKey = 'ascii_generator_visitor_count';
+                this.sessionKey = 'ascii_generator_session_id';
                 this.visitorCountElement = document.getElementById('visitorCount');
+                this.isNewVisitor = false;
+                this.isNewSession = false;
                 this.init();
             }
 
             init() {
                 // Проверяем, есть ли уже ID посетителя
                 let visitorId = localStorage.getItem(this.storageKey);
+                let sessionId = sessionStorage.getItem(this.sessionKey);
                 
+                // Проверяем новый ли это посетитель
                 if (!visitorId) {
-                    // Создаем новый уникальный ID для посетителя
                     visitorId = this.generateVisitorId();
                     localStorage.setItem(this.storageKey, visitorId);
-                    
-                    // Увеличиваем счетчик посещений
+                    this.isNewVisitor = true;
                     this.incrementCounter();
                 }
+                
+                // Проверяем новую ли это сессия
+                if (!sessionId) {
+                    sessionId = this.generateSessionId();
+                    sessionStorage.setItem(this.sessionKey, sessionId);
+                    this.isNewSession = true;
+                }
+                
+                // Отправляем события в Яндекс.Метрику
+                this.sendYandexMetricsEvents();
                 
                 // Отображаем текущий счетчик
                 this.updateDisplay();
@@ -1252,6 +1678,10 @@
 
             generateVisitorId() {
                 return 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            generateSessionId() {
+                return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             }
 
             incrementCounter() {
@@ -1282,13 +1712,72 @@
                     this.visitorCountElement.textContent = displayCount.toLocaleString();
                 }, 50);
             }
+
+            sendYandexMetricsEvents() {
+                // Проверяем, что Яндекс.Метрика загружена
+                if (typeof ym !== 'undefined') {
+                    // Отправляем событие о посещении страницы
+                    ym(104205244, 'hit', window.location.href, {
+                        title: document.title,
+                        referer: document.referrer || '',
+                        userParams: {
+                            visitor_type: this.isNewVisitor ? 'new' : 'returning',
+                            session_type: this.isNewSession ? 'new_session' : 'returning_session'
+                        }
+                    });
+
+                    // Если это новый посетитель, отправляем специальное событие
+                    if (this.isNewVisitor) {
+                        ym(104205244, 'reachGoal', 'new_visitor');
+                    }
+
+                    // Если это новая сессия, отправляем событие
+                    if (this.isNewSession) {
+                        ym(104205244, 'reachGoal', 'new_session');
+                    }
+
+                    // Отправляем событие о загрузке ASCII генератора
+                    ym(104205244, 'reachGoal', 'ascii_generator_loaded');
+                } else {
+                    // Если Яндекс.Метрика еще не загружена, ждем
+                    setTimeout(() => this.sendYandexMetricsEvents(), 100);
+                }
+            }
+
+            // Метод для отправки событий о действиях пользователя
+            trackUserAction(action, details = {}) {
+                if (typeof ym !== 'undefined') {
+                    ym(104205244, 'reachGoal', action, details);
+                }
+            }
+        }
+
+        // Глобальная переменная для счетчика посетителей
+        let globalVisitorCounter = null;
+
+        // Функция для обработки клика по котенку
+        function handleKittenClick() {
+            // Отслеживаем клик по котенку
+            if (globalVisitorCounter) {
+                globalVisitorCounter.trackUserAction('telegram_link_clicked');
+            }
+            
+            // Открываем ссылку на Telegram
+            window.open('https://t.me/deadmenwalkingout', '_blank');
         }
 
         // Инициализируем плеер и счетчик при загрузке страницы
         document.addEventListener('DOMContentLoaded', () => {
-            new AdvancedASCIIVideoPlayer();
-            new VisitorCounter();
+            const player = new AdvancedASCIIVideoPlayer();
+            const visitorCounter = new VisitorCounter();
+            
+            // Сохраняем ссылку на счетчик в глобальной переменной
+            globalVisitorCounter = visitorCounter;
+            
+            // Передаем ссылку на счетчик в плеер для отслеживания действий
+            player.visitorCounter = visitorCounter;
         });
     </script>
 </body>
 </html>
+
